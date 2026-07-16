@@ -9,9 +9,9 @@ public class MemberIdGenerator {
     private static final int DIGITS = 6;
 
     /**
-     * Generates the next member ID in format MEM000001, MEM000002, etc.
+     * Generates the next member ID in format MEM000001, MEM000002, and so on.
      *
-     * @param lastId The last member ID (e.g., "MEM000003") or null if none exists
+     * @param lastId The last member ID (Eg: "MEM000003") or null if none exists
      * @return The next member ID
      */
     public String generateNextId(String lastId) {
