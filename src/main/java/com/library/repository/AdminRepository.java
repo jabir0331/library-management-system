@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AdminRepository extends JpaRepository<Admin, Long> {
+public interface AdminRepository extends JpaRepository<Admin, String> {  // Changed Long to String
 
     Optional<Admin> findByUsername(String username);
 
@@ -20,11 +20,13 @@ public interface AdminRepository extends JpaRepository<Admin, Long> {
 
     boolean existsByEmail(String email);
 
-    // Custom JPQL query
     @Query("SELECT a FROM Admin a WHERE a.username LIKE %:keyword% OR a.email LIKE %:keyword%")
     List<Admin> searchAdmins(@Param("keyword") String keyword);
 
-    // Native SQL query
     @Query(value = "SELECT * FROM admin WHERE created_at > NOW() - INTERVAL '30 days'", nativeQuery = true)
     List<Admin> findRecentAdmins();
+
+    // NEW: Get last admin ID for generation
+    @Query("SELECT a.adminId FROM Admin a ORDER BY a.adminId DESC LIMIT 1")
+    String findLastAdminId();
 }

@@ -12,10 +12,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AdminResponseDTO implements BaseDTO {
 
-    private Long id;
+    private String adminId;  // Changed from Long to String
     private String username;
     private String email;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 }
