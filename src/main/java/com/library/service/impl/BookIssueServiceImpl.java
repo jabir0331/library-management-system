@@ -3,7 +3,9 @@ package com.library.service.impl;
 import com.library.dto.request.BookIssueRequestDTO;
 import com.library.dto.request.BookReturnRequestDTO;
 import com.library.dto.response.BookIssueResponseDTO;
+import com.library.exception.BusinessException;
 import com.library.exception.ResourceNotFoundException;
+import com.library.exception.ValidationException;
 import com.library.model.*;
 import com.library.model.enums.IssueStatus;
 import com.library.model.enums.ReturnCondition;
@@ -47,7 +49,7 @@ public class BookIssueServiceImpl implements BookIssueService {
                 .orElseThrow(() -> new ResourceNotFoundException("Member", request.getMemberId()));
 
         if (member.getStatus() != Member.MemberStatus.ACTIVE) {
-            throw new RuntimeException("Member is not active. Current status: " + member.getStatus());
+            throw new BusinessException("Member is not active. Current status: " + member.getStatus());
         }
 
         // 2. Validate Book Edition
@@ -55,14 +57,14 @@ public class BookIssueServiceImpl implements BookIssueService {
                 .orElseThrow(() -> new ResourceNotFoundException("BookEdition", request.getBookEditionId()));
 
         if (edition.getAvailableCopies() <= 0) {
-            throw new RuntimeException("No copies available for this edition");
+            throw new BusinessException("No copies available for this edition");
         }
 
         // 3. Check if member has reached max books limit
         int maxBooks = configService.getMaxBooksPerMember();
         long activeIssues = bookIssueRepository.countActiveIssuesByMember(member.getMemberId());
         if (activeIssues >= maxBooks) {
-            throw new RuntimeException("Member has reached maximum book limit: " + maxBooks);
+            throw new BusinessException("Member has reached maximum book limit: " + maxBooks);
         }
 
         // 4. Validate Admin
@@ -81,7 +83,7 @@ public class BookIssueServiceImpl implements BookIssueService {
 
         // 7. Validate due date is after issued date
         if (dueDate.isBefore(issuedDate) || dueDate.isEqual(issuedDate)) {
-            throw new RuntimeException("Due date must be after issued date");
+            throw new ValidationException("Due date must be after issued date");
         }
 
         // 8. Create BookIssue
@@ -116,11 +118,11 @@ public class BookIssueServiceImpl implements BookIssueService {
                 .orElseThrow(() -> new ResourceNotFoundException("BookIssue", request.getIssueId()));
 
         if (issue.isReturned()) {
-            throw new RuntimeException("Book already returned on: " + issue.getReturnedDate());
+            throw new BusinessException("Book already returned on: " + issue.getReturnedDate());
         }
 
         if (issue.isLost()) {
-            throw new RuntimeException("Book is marked as lost. Cannot return.");
+            throw new BusinessException("Book is marked as lost. Cannot return.");
         }
 
         // 2. Validate return date
@@ -128,7 +130,7 @@ public class BookIssueServiceImpl implements BookIssueService {
                 request.getReturnedDate() : LocalDate.now();
 
         if (returnDate.isBefore(issue.getIssuedDate())) {
-            throw new RuntimeException("Return date cannot be before issue date");
+            throw new ValidationException("Return date cannot be before issue date");
         }
 
         // 3. Validate Admin
@@ -170,11 +172,11 @@ public class BookIssueServiceImpl implements BookIssueService {
                 .orElseThrow(() -> new ResourceNotFoundException("BookIssue", issueId));
 
         if (issue.isReturned()) {
-            throw new RuntimeException("Cannot mark as lost. Book already returned.");
+            throw new BusinessException("Cannot mark as lost. Book already returned.");
         }
 
         if (issue.isLost()) {
-            throw new RuntimeException("Book already marked as lost.");
+            throw new BusinessException("Book already marked as lost.");
         }
 
         Admin admin = adminRepository.findById(adminId)

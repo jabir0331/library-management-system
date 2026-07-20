@@ -2,7 +2,9 @@ package com.library.service.impl;
 
 import com.library.dto.request.AdminRequestDTO;
 import com.library.dto.response.AdminResponseDTO;
+import com.library.exception.BusinessException;
 import com.library.exception.ResourceNotFoundException;
+import com.library.exception.ValidationException;
 import com.library.model.Admin;
 import com.library.repository.AdminRepository;
 import com.library.service.AdminService;
@@ -28,18 +30,18 @@ public class AdminServiceImpl implements AdminService {
     public AdminResponseDTO createAdmin(AdminRequestDTO request) {
         // Validate username uniqueness
         if (adminRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists: " + request.getUsername());
+            throw new ValidationException("Username already exists: " + request.getUsername());
         }
 
         // Validate email uniqueness
         if (adminRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new ValidationException("Email already registered: " + request.getEmail());
         }
 
         // Convert DTO to Entity
         Admin admin = modelMapper.map(request, Admin.class);
 
-        // NEW: Generate custom ID
+        // Generate custom ID
         String lastId = adminRepository.findLastAdminId();
         admin.setAdminId(adminIdGenerator.generateNextId(lastId));
 
@@ -81,31 +83,31 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public AdminResponseDTO updateAdmin(String id, AdminRequestDTO request) {  // Changed Long to String
-        // 1. Find existing admin
+        // Find existing admin
         Admin existingAdmin = adminRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin", id));
 
-        // 2. Check if new username conflicts (if changed)
+        // Check if new username conflicts (if changed)
         if (!existingAdmin.getUsername().equals(request.getUsername())
                 && adminRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already taken: " + request.getUsername());
+            throw new BusinessException("Username already taken: " + request.getUsername());
         }
 
-        // 3. Check if new email conflicts (if changed)
+        // Check if new email conflicts (if changed)
         if (!existingAdmin.getEmail().equals(request.getEmail())
                 && adminRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new ValidationException("Email already registered: " + request.getEmail());
         }
 
-        // 4. Update fields
+        // Update fields
         existingAdmin.setUsername(request.getUsername());
         existingAdmin.setEmail(request.getEmail());
         existingAdmin.setPassword(request.getPassword()); // TODO: Encrypt later
 
-        // 5. Save updated admin
+        // Save updated admin
         Admin updatedAdmin = adminRepository.save(existingAdmin);
 
-        // 6. Convert to Response DTO
+        // Convert to Response DTO
         return modelMapper.map(updatedAdmin, AdminResponseDTO.class);
     }
 

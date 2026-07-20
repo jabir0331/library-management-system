@@ -3,6 +3,7 @@ package com.library.service.impl;
 import com.library.dto.request.BookRequestDTO;
 import com.library.dto.response.BookEditionResponseDTO;
 import com.library.dto.response.BookResponseDTO;
+import com.library.exception.BusinessException;
 import com.library.exception.ResourceNotFoundException;
 import com.library.model.Author;
 import com.library.model.Book;
@@ -108,7 +109,7 @@ public class BookServiceImpl implements BookService {
 
         // Check if book has editions
         if (!bookRepository.findEditionsByBookId(bookId).isEmpty()) {
-            throw new RuntimeException("Cannot delete book with existing editions. Delete editions first.");
+            throw new BusinessException("Cannot delete book with existing editions. Delete editions first.");
         }
 
         bookRepository.deleteById(bookId);

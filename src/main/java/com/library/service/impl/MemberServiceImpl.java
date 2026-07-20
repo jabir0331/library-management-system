@@ -2,6 +2,7 @@ package com.library.service.impl;
 
 import com.library.dto.request.MemberRequestDTO;
 import com.library.dto.response.MemberResponseDTO;
+import com.library.exception.BusinessException;
 import com.library.exception.ResourceNotFoundException;
 import com.library.model.Member;
 import com.library.model.Member.MemberStatus;
@@ -29,7 +30,7 @@ public class MemberServiceImpl implements MemberService {
     public MemberResponseDTO createMember(MemberRequestDTO request) {
         // 1. Validate email uniqueness
         if (memberRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new BusinessException("Email already registered: " + request.getEmail());
         }
 
         // 2. Convert DTO to Entity
@@ -87,7 +88,7 @@ public class MemberServiceImpl implements MemberService {
 
         if (!existingMember.getEmail().equals(request.getEmail())
                 && memberRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new BusinessException("Email already registered: " + request.getEmail());
         }
 
         existingMember.setFirstName(request.getFirstName());

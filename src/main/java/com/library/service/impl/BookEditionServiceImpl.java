@@ -2,7 +2,9 @@ package com.library.service.impl;
 
 import com.library.dto.request.BookEditionRequestDTO;
 import com.library.dto.response.BookEditionResponseDTO;
+import com.library.exception.BusinessException;
 import com.library.exception.ResourceNotFoundException;
+import com.library.exception.ValidationException;
 import com.library.model.Book;
 import com.library.model.BookEdition;
 import com.library.repository.BookEditionRepository;
@@ -35,7 +37,7 @@ public class BookEditionServiceImpl implements BookEditionService {
         // Check if ISBN already exists
         bookEditionRepository.findByIsbn(request.getIsbn())
                 .ifPresent(edition -> {
-                    throw new RuntimeException("ISBN already exists: " + request.getIsbn());
+                    throw new ValidationException("ISBN already exists: " + request.getIsbn());
                 });
 
         // Create new edition - MANUAL MAPPING (no ModelMapper)
@@ -90,7 +92,7 @@ public class BookEditionServiceImpl implements BookEditionService {
         bookEditionRepository.findByIsbn(request.getIsbn())
                 .ifPresent(edition -> {
                     if (!edition.getEditionId().equals(editionId)) {
-                        throw new RuntimeException("ISBN already exists: " + request.getIsbn());
+                        throw new ValidationException("ISBN already exists: " + request.getIsbn());
                     }
                 });
 
@@ -127,10 +129,10 @@ public class BookEditionServiceImpl implements BookEditionService {
                 .orElseThrow(() -> new ResourceNotFoundException("BookEdition", editionId));
 
         if (newAvailableCopies < 0) {
-            throw new RuntimeException("Available copies cannot be negative");
+            throw new BusinessException("Available copies cannot be negative");
         }
         if (newAvailableCopies > edition.getTotalCopies()) {
-            throw new RuntimeException("Available copies cannot exceed total copies: " + edition.getTotalCopies());
+            throw new BusinessException("Available copies cannot exceed total copies: " + edition.getTotalCopies());
         }
 
         edition.setAvailableCopies(newAvailableCopies);

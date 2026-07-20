@@ -3,6 +3,7 @@ package com.library.service.impl;
 import com.library.dto.request.GenreRequestDTO;
 import com.library.dto.response.GenreResponseDTO;
 import com.library.exception.ResourceNotFoundException;
+import com.library.exception.ValidationException;
 import com.library.model.Genre;
 import com.library.repository.GenreRepository;
 import com.library.service.GenreService;
@@ -27,7 +28,7 @@ public class GenreServiceImpl implements GenreService {
     @Override
     public GenreResponseDTO createGenre(GenreRequestDTO request) {
         if (genreRepository.existsByName(request.getName())) {
-            throw new RuntimeException("Genre already exists: " + request.getName());
+            throw new ValidationException("Genre already exists: " + request.getName());
         }
 
         Genre genre = modelMapper.map(request, Genre.class);
@@ -67,7 +68,7 @@ public class GenreServiceImpl implements GenreService {
 
         if (!existingGenre.getName().equals(request.getName())
                 && genreRepository.existsByName(request.getName())) {
-            throw new RuntimeException("Genre already exists: " + request.getName());
+            throw new ValidationException("Genre already exists: " + request.getName());
         }
 
         existingGenre.setName(request.getName());

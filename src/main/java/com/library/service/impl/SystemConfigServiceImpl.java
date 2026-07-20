@@ -3,7 +3,9 @@ package com.library.service.impl;
 import com.library.dto.request.SystemConfigRequestDTO;
 import com.library.dto.response.SystemConfigResponseDTO;
 import com.library.dto.seed.SystemConfigSeedDTO;
+import com.library.exception.BusinessException;
 import com.library.exception.ResourceNotFoundException;
+import com.library.exception.ValidationException;
 import com.library.model.SystemConfig;
 import com.library.model.enums.ConfigDataType;
 import com.library.repository.SystemConfigRepository;
@@ -271,7 +273,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     @Override
     public SystemConfigResponseDTO createConfig(SystemConfigRequestDTO request) {
         if (configRepository.existsByConfigKey(request.getConfigKey())) {
-            throw new RuntimeException("Config key already exists: " + request.getConfigKey());
+            throw new BusinessException("Config key already exists: " + request.getConfigKey());
         }
 
         SystemConfig config = new SystemConfig();
@@ -284,7 +286,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         try {
             config.setDataType(ConfigDataType.valueOf(request.getDataType().toUpperCase()));
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid data type: " + request.getDataType());
+            throw new ValidationException("Invalid data type: " + request.getDataType());
         }
 
         config.setEditable(request.isEditable());
@@ -321,12 +323,12 @@ public class SystemConfigServiceImpl implements SystemConfigService {
                 .orElseThrow(() -> new ResourceNotFoundException("Config not found with key: " + configKey));
 
         if (!config.isEditable()) {
-            throw new RuntimeException("Config is not editable: " + configKey);
+            throw new BusinessException("Config is not editable: " + configKey);
         }
 
         // Validate value based on data type
         if (!isValidValue(newValue, config.getDataType())) {
-            throw new RuntimeException("Invalid value '" + newValue + "' for data type: " + config.getDataType());
+            throw new ValidationException("Invalid value '" + newValue + "' for data type: " + config.getDataType());
         }
 
         config.setConfigValue(newValue);

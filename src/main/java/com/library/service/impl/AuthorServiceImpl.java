@@ -3,6 +3,7 @@ package com.library.service.impl;
 import com.library.dto.request.AuthorRequestDTO;
 import com.library.dto.response.AuthorResponseDTO;
 import com.library.exception.ResourceNotFoundException;
+import com.library.exception.ValidationException;
 import com.library.model.Author;
 import com.library.repository.AuthorRepository;
 import com.library.service.AuthorService;
@@ -26,26 +27,26 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     public AuthorResponseDTO createAuthor(AuthorRequestDTO request) {
-        // 1. Validate email uniqueness
+        // Validate email uniqueness
         if (authorRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new ValidationException("Email already registered: " + request.getEmail());
         }
 
-        // 2. Convert DTO to Entity
+        // Convert DTO to Entity
         Author author = modelMapper.map(request, Author.class);
 
-        // 3. Generate custom author ID
+        // Generate custom author ID
         String lastId = authorRepository.findLastAuthorId();
         String newId = idGenerator.generateNextId(lastId);
         author.setAuthorId(newId);
 
-        // 4. Set default active status
+        // Set default active status
         author.setActive(true);
 
-        // 5. Save to database
+        // Save to database
         Author savedAuthor = authorRepository.save(author);
 
-        // 6. Convert to Response DTO
+        // Convert to Response DTO
         return mapToResponseDTO(savedAuthor);
     }
 
@@ -89,26 +90,26 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     public AuthorResponseDTO updateAuthor(String authorId, AuthorRequestDTO request) {
-        // 1. Find existing author
+        // Find existing author
         Author existingAuthor = authorRepository.findById(authorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Author", authorId));
 
-        // 2. Check if email changed and if new email is taken
+        // Check if email changed and if new email is taken
         if (!existingAuthor.getEmail().equals(request.getEmail())
                 && authorRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new ValidationException("Email already registered: " + request.getEmail());
         }
 
-        // 3. Update fields
+        // Update fields
         existingAuthor.setFirstName(request.getFirstName());
         existingAuthor.setLastName(request.getLastName());
         existingAuthor.setEmail(request.getEmail());
         existingAuthor.setNationality(request.getNationality());
 
-        // 4. Save updated author
+        // Save updated author
         Author updatedAuthor = authorRepository.save(existingAuthor);
 
-        // 5. Convert to Response DTO
+        // Convert to Response DTO
         return mapToResponseDTO(updatedAuthor);
     }
 
