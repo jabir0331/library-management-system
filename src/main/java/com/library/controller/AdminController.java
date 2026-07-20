@@ -18,72 +18,72 @@ public class AdminController {
 
     private final AdminService adminService;
 
-    // Create Admin
+    // 1. Create Admin
     @PostMapping
     public ResponseEntity<AdminResponseDTO> createAdmin(@Valid @RequestBody AdminRequestDTO request) {
         AdminResponseDTO response = adminService.createAdmin(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // Get Admin by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<AdminResponseDTO> getAdminById(@PathVariable Long id) {
-        AdminResponseDTO response = adminService.getAdminById(id);
+    // 2. Get Admin by ID
+    @GetMapping("/{adminId}")
+    public ResponseEntity<AdminResponseDTO> getAdminById(@PathVariable String adminId) {  // Changed to String
+        AdminResponseDTO response = adminService.getAdminById(adminId);
         return ResponseEntity.ok(response);
     }
 
-    // Get Admin by Username
+    // 3. Get Admin by Username
     @GetMapping("/username/{username}")
     public ResponseEntity<AdminResponseDTO> getAdminByUsername(@PathVariable String username) {
         AdminResponseDTO response = adminService.getAdminByUsername(username);
         return ResponseEntity.ok(response);
     }
 
-    // Get Admin by Email
+    // 4. Get Admin by Email
     @GetMapping("/email/{email}")
     public ResponseEntity<AdminResponseDTO> getAdminByEmail(@PathVariable String email) {
         AdminResponseDTO response = adminService.getAdminByEmail(email);
         return ResponseEntity.ok(response);
     }
 
-    // Get All Admins
+    // 5. Get All Admins
     @GetMapping
     public ResponseEntity<List<AdminResponseDTO>> getAllAdmins() {
         List<AdminResponseDTO> admins = adminService.getAllAdmins();
         return ResponseEntity.ok(admins);
     }
 
-    // Update Admin
-    @PutMapping("/{id}")
+    // 6. Update Admin
+    @PutMapping("/{adminId}")
     public ResponseEntity<AdminResponseDTO> updateAdmin(
-            @PathVariable Long id,
+            @PathVariable String adminId,  // Changed to String
             @Valid @RequestBody AdminRequestDTO request) {
-        AdminResponseDTO response = adminService.updateAdmin(id, request);
+        AdminResponseDTO response = adminService.updateAdmin(adminId, request);
         return ResponseEntity.ok(response);
     }
 
-    // Delete Admin
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAdmin(@PathVariable Long id) {
-        adminService.deleteAdmin(id);
+    // 7. Delete Admin
+    @DeleteMapping("/{adminId}")
+    public ResponseEntity<Void> deleteAdmin(@PathVariable String adminId) {  // Changed to String
+        adminService.deleteAdmin(adminId);
         return ResponseEntity.noContent().build();
     }
 
-    // Search Admins
+    // 8. Search Admins
     @GetMapping("/search")
     public ResponseEntity<List<AdminResponseDTO>> searchAdmins(@RequestParam String keyword) {
         List<AdminResponseDTO> admins = adminService.searchAdmins(keyword);
         return ResponseEntity.ok(admins);
     }
 
-    // Check if Username Exists
+    // 9. Check if Username Exists
     @GetMapping("/exists/username/{username}")
     public ResponseEntity<Boolean> existsByUsername(@PathVariable String username) {
         boolean exists = adminService.existsByUsername(username);
         return ResponseEntity.ok(exists);
     }
 
-    // Check if Email Exists
+    // 10. Check if Email Exists
     @GetMapping("/exists/email/{email}")
     public ResponseEntity<Boolean> existsByEmail(@PathVariable String email) {
         boolean exists = adminService.existsByEmail(email);

@@ -18,9 +18,8 @@ import java.time.LocalDateTime;
 public class Admin {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "admin_id")
-    private Long id;
+    @Column(name = "admin_id", length = 10)
+    private String adminId;  // Changed from Long to String - ADM000001
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 25, message = "Username must be between 3 and 25 characters")

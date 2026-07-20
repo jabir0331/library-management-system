@@ -9,7 +9,7 @@ public interface AdminService {
 
     AdminResponseDTO createAdmin(AdminRequestDTO request);
 
-    AdminResponseDTO getAdminById(Long id);
+    AdminResponseDTO getAdminById(String id);  // Changed Long to String
 
     AdminResponseDTO getAdminByUsername(String username);
 
@@ -17,9 +17,9 @@ public interface AdminService {
 
     List<AdminResponseDTO> getAllAdmins();
 
-    AdminResponseDTO updateAdmin(Long id, AdminRequestDTO request);
+    AdminResponseDTO updateAdmin(String id, AdminRequestDTO request);  // Changed Long to String
 
-    void deleteAdmin(Long id);
+    void deleteAdmin(String id);  // Changed Long to String
 
     boolean existsByUsername(String username);
 

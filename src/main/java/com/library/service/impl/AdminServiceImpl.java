@@ -6,6 +6,7 @@ import com.library.exception.ResourceNotFoundException;
 import com.library.model.Admin;
 import com.library.repository.AdminRepository;
 import com.library.service.AdminService;
+import com.library.util.AdminIdGenerator;  // NEW import
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class AdminServiceImpl implements AdminService {
 
     private final AdminRepository adminRepository;
     private final ModelMapper modelMapper;
+    private final AdminIdGenerator adminIdGenerator;  // NEW dependency
 
     @Override
     public AdminResponseDTO createAdmin(AdminRequestDTO request) {
@@ -37,6 +39,10 @@ public class AdminServiceImpl implements AdminService {
         // Convert DTO to Entity
         Admin admin = modelMapper.map(request, Admin.class);
 
+        // NEW: Generate custom ID
+        String lastId = adminRepository.findLastAdminId();
+        admin.setAdminId(adminIdGenerator.generateNextId(lastId));
+
         // Save to database
         Admin savedAdmin = adminRepository.save(admin);
 
@@ -45,7 +51,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public AdminResponseDTO getAdminById(Long id) {
+    public AdminResponseDTO getAdminById(String id) {  // Changed Long to String
         Admin admin = adminRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin", id));
         return modelMapper.map(admin, AdminResponseDTO.class);
@@ -74,7 +80,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public AdminResponseDTO updateAdmin(Long id, AdminRequestDTO request) {
+    public AdminResponseDTO updateAdmin(String id, AdminRequestDTO request) {  // Changed Long to String
         // 1. Find existing admin
         Admin existingAdmin = adminRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin", id));
@@ -104,7 +110,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public void deleteAdmin(Long id) {
+    public void deleteAdmin(String id) {  // Changed Long to String
         if (!adminRepository.existsById(id)) {
             throw new ResourceNotFoundException("Admin", id);
         }
