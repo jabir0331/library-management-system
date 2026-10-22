@@ -41,7 +41,7 @@ public class BookIssueServiceImpl implements BookIssueService {
     private final BookIssueReferenceGenerator referenceGenerator;
 
     @Override
-    public BookIssueResponseDTO issueBook(BookIssueRequestDTO request) {
+    public BookIssueResponseDTO issueBook(BookIssueRequestDTO request, String issuedById) {
         log.info("Processing book issue request for member: {}", request.getMemberId());
 
         // 1. Validate Member
@@ -68,8 +68,8 @@ public class BookIssueServiceImpl implements BookIssueService {
         }
 
         // 4. Validate Admin
-        Admin issuedBy = adminRepository.findById(request.getIssuedById())
-                .orElseThrow(() -> new ResourceNotFoundException("Admin", request.getIssuedById()));
+        Admin issuedBy = adminRepository.findById(issuedById)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin", issuedById));
 
         // 5. Set issue date
         LocalDate issuedDate = request.getIssuedDate() != null ? request.getIssuedDate() : LocalDate.now();
@@ -110,7 +110,7 @@ public class BookIssueServiceImpl implements BookIssueService {
     }
 
     @Override
-    public BookIssueResponseDTO returnBook(BookReturnRequestDTO request) {
+    public BookIssueResponseDTO returnBook(BookReturnRequestDTO request, String receivedById) {
         log.info("Processing book return for issue: {}", request.getIssueId());
 
         // 1. Find issue record
@@ -134,8 +134,8 @@ public class BookIssueServiceImpl implements BookIssueService {
         }
 
         // 3. Validate Admin
-        Admin receivedBy = adminRepository.findById(request.getReceivedById())
-                .orElseThrow(() -> new ResourceNotFoundException("Admin", request.getReceivedById()));
+        Admin receivedBy = adminRepository.findById(receivedById)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin", receivedById));
 
         // 4. Calculate fine if overdue
         BigDecimal fineAmount = calculateFine(issue, returnDate);

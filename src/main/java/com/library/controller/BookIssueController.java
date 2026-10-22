@@ -4,6 +4,7 @@ import com.library.dto.request.BookIssueRequestDTO;
 import com.library.dto.request.BookReturnRequestDTO;
 import com.library.dto.response.BookIssueResponseDTO;
 import com.library.model.enums.IssueStatus;
+import com.library.security.AdminPrincipal;
 import com.library.service.BookIssueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -85,13 +87,13 @@ public class BookIssueController {
                     example = "{\n" +
                             "  \"memberId\": \"MEM000001\",\n" +
                             "  \"bookEditionId\": \"ED000001\",\n" +
-                            "  \"issuedById\": \"ADM000001\",\n" +
                             "  \"issuedDate\": \"2026-07-20\",\n" +
                             "  \"dueDate\": \"2026-08-03\"\n" +
                             "}"
             )
-            @Valid @RequestBody BookIssueRequestDTO request) {
-        BookIssueResponseDTO response = bookIssueService.issueBook(request);
+            @Valid @RequestBody BookIssueRequestDTO request,
+            @AuthenticationPrincipal AdminPrincipal admin) {
+        BookIssueResponseDTO response = bookIssueService.issueBook(request, admin.getAdminId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -149,12 +151,12 @@ public class BookIssueController {
                     example = "{\n" +
                             "  \"issueId\": \"BKI000001\",\n" +
                             "  \"returnedDate\": \"2026-07-22\",\n" +
-                            "  \"receivedById\": \"ADM000001\",\n" +
                             "  \"returnCondition\": \"GOOD\"\n" +
                             "}"
             )
-            @Valid @RequestBody BookReturnRequestDTO request) {
-        return ResponseEntity.ok(bookIssueService.returnBook(request));
+            @Valid @RequestBody BookReturnRequestDTO request,
+            @AuthenticationPrincipal AdminPrincipal admin) {
+        return ResponseEntity.ok(bookIssueService.returnBook(request, admin.getAdminId()));
     }
 
     // 3. Mark book as lost
@@ -204,11 +206,10 @@ public class BookIssueController {
     public ResponseEntity<BookIssueResponseDTO> markAsLost(
             @Parameter(description = "Issue ID (e.g., BKI000001)", required = true, example = "BKI000001")
             @PathVariable String issueId,
-            @Parameter(description = "Admin ID processing the loss (e.g., ADM000001)", required = true, example = "ADM000001")
-            @RequestParam String adminId,
             @Parameter(description = "Custom penalty amount (optional, auto-calculated if not provided)", example = "50.00")
-            @RequestParam(required = false) BigDecimal penaltyAmount) {
-        return ResponseEntity.ok(bookIssueService.markBookAsLost(issueId, adminId, penaltyAmount));
+            @RequestParam(required = false) BigDecimal penaltyAmount,
+            @AuthenticationPrincipal AdminPrincipal admin) {
+        return ResponseEntity.ok(bookIssueService.markBookAsLost(issueId, admin.getAdminId(), penaltyAmount));
     }
 
     // 4. Get issue by ID
