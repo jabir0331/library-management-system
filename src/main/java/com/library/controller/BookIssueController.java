@@ -45,7 +45,8 @@ public class BookIssueController {
             - Due date is auto-calculated as issuedDate + MAX_ISSUE_DAYS (from System Config)
             - Or you can provide a custom due date in the request
             - Available copies will be decreased automatically
-            - Reference number is auto-generated in BKI-YYYYMMDD-HHMMSS format
+            - Members holding overdue books cannot borrow until they return them
+            - Reference number is auto-generated in BKI-YYYYMMDD-HHMMSS-NNNN format
             """
     )
     @ApiResponses(value = {
@@ -56,7 +57,7 @@ public class BookIssueController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Business rule violation - No copies available, Member limit reached, etc.",
+                    description = "Business rule violation - No copies available, Member limit reached, Member has overdue books, etc.",
                     content = @Content(
                             mediaType = "application/json",
                             examples = {
@@ -109,7 +110,7 @@ public class BookIssueController {
             Processes the return of a borrowed book.
             - Fine is automatically calculated if overdue (using System Config: FINE_PER_DAY)
             - Available copies are increased
-            - Status changes to RETURNED or OVERDUE based on return date
+            - Status changes to RETURNED (a late return also records a fine)
             """
     )
     @ApiResponses(value = {
@@ -366,7 +367,7 @@ public class BookIssueController {
     @GetMapping("/status/{status}")
     @Operation(
             summary = "Get Issues by Status",
-            description = "Retrieves a page of book issues with the given status (ISSUED, RETURNED, OVERDUE or LOST)"
+            description = "Retrieves a page of book issues with the given status. ISSUED = borrowed and not yet due; OVERDUE = borrowed and past the due date; RETURNED = returned (late returns carry a fine); LOST = marked lost"
     )
     @ApiResponse(
             responseCode = "200",

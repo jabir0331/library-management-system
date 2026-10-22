@@ -98,7 +98,22 @@ public class BookIssue {
 
     public long getDaysOverdue() {
         LocalDate dateToCheck = returnedDate != null ? returnedDate : LocalDate.now();
-        return ChronoUnit.DAYS.between(dueDate, dateToCheck);
+        return Math.max(0, ChronoUnit.DAYS.between(dueDate, dateToCheck));
+    }
+
+    /**
+     * Status shown to API clients. OVERDUE is derived (still borrowed and past due) and is never
+     * written to the database, so it can't go stale.
+     */
+    public IssueStatus getEffectiveStatus() {
+        if (status == IssueStatus.OVERDUE) {
+            // Legacy rows: a late return used to be stored as OVERDUE
+            return returnedDate != null ? IssueStatus.RETURNED : IssueStatus.OVERDUE;
+        }
+        if (status == IssueStatus.ISSUED && LocalDate.now().isAfter(dueDate)) {
+            return IssueStatus.OVERDUE;
+        }
+        return status;
     }
 
     public boolean isReturned() {

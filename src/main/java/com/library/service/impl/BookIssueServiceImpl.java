@@ -53,6 +53,13 @@ public class BookIssueServiceImpl implements BookIssueService {
             throw new BusinessException("Member is not active. Current status: " + member.getStatus());
         }
 
+        // Members holding overdue books can't borrow more until they return them
+        long overdueCount = bookIssueRepository.countOverdueIssuesByMember(member.getMemberId(), LocalDate.now());
+        if (overdueCount > 0) {
+            throw new BusinessException("Member has " + overdueCount
+                    + " overdue book(s) and cannot borrow until they are returned");
+        }
+
         // 2. Validate Book Edition
         BookEdition edition = bookEditionRepository.findById(request.getBookEditionId())
                 .orElseThrow(() -> new ResourceNotFoundException("BookEdition", request.getBookEditionId()));
@@ -141,16 +148,12 @@ public class BookIssueServiceImpl implements BookIssueService {
         // 4. Calculate fine if overdue
         BigDecimal fineAmount = calculateFine(issue, returnDate);
 
-        // 5. Determine status
-        IssueStatus status = returnDate.isAfter(issue.getDueDate()) ?
-                IssueStatus.OVERDUE : IssueStatus.RETURNED;
-
         // 6. Update issue record
         issue.setReturnedDate(returnDate);
         issue.setReceivedBy(receivedBy);
         issue.setReturnCondition(request.getReturnCondition() != null ?
                 request.getReturnCondition() : ReturnCondition.GOOD);
-        issue.setStatus(status);
+        issue.setStatus(IssueStatus.RETURNED); // a late return is still RETURNED; the fine records the lateness
         issue.setFineAmount(fineAmount);
 
         // 7. Increase available copies
@@ -252,8 +255,14 @@ public class BookIssueServiceImpl implements BookIssueService {
 
     @Override
     public Page<BookIssueResponseDTO> getIssuesByStatus(IssueStatus status, Pageable pageable) {
-        return bookIssueRepository.findByStatus(status, pageable)
-                .map(this::mapToResponseDTO);
+        LocalDate today = LocalDate.now();
+        Page<BookIssue> issues = switch (status) {
+            case ISSUED -> bookIssueRepository.findCurrentIssues(today, pageable);
+            case OVERDUE -> bookIssueRepository.findOverdueIssues(today, pageable);
+            case RETURNED -> bookIssueRepository.findReturnedIssues(pageable);
+            case LOST -> bookIssueRepository.findByStatus(IssueStatus.LOST, pageable);
+        };
+        return issues.map(this::mapToResponseDTO);
     }
 
     @Override
@@ -263,6 +272,11 @@ public class BookIssueServiceImpl implements BookIssueService {
                 .orElseThrow(() -> new ResourceNotFoundException("Member", memberId));
 
         if (member.getStatus() != Member.MemberStatus.ACTIVE) {
+            return false;
+        }
+
+        // Overdue books block further borrowing
+        if (bookIssueRepository.countOverdueIssuesByMember(memberId, LocalDate.now()) > 0) {
             return false;
         }
 
@@ -329,7 +343,7 @@ public class BookIssueServiceImpl implements BookIssueService {
         response.setReferenceNumber(issue.getReferenceNumber());
         response.setIssuedDate(issue.getIssuedDate());
         response.setDueDate(issue.getDueDate());
-        response.setStatus(issue.getStatus());
+        response.setStatus(issue.getEffectiveStatus());
 
         // Member info
         response.setMemberId(issue.getMember().getMemberId());

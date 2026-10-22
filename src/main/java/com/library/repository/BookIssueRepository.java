@@ -34,6 +34,19 @@ public interface BookIssueRepository extends JpaRepository<BookIssue, String> {
     @Query("SELECT bi FROM BookIssue bi WHERE bi.dueDate < :currentDate AND bi.status = 'ISSUED'")
     Page<BookIssue> findOverdueIssues(@Param("currentDate") LocalDate currentDate, Pageable pageable);
 
+    @Query("SELECT COUNT(bi) FROM BookIssue bi WHERE bi.member.memberId = :memberId " +
+            "AND bi.status = 'ISSUED' AND bi.dueDate < :today")
+    long countOverdueIssuesByMember(@Param("memberId") String memberId, @Param("today") LocalDate today);
+
+    // Borrowed and not yet due (the derived ISSUED status)
+    @Query("SELECT bi FROM BookIssue bi WHERE bi.status = 'ISSUED' AND bi.dueDate >= :today")
+    Page<BookIssue> findCurrentIssues(@Param("today") LocalDate today, Pageable pageable);
+
+    // Also matches legacy rows where a late return was stored as OVERDUE
+    @Query("SELECT bi FROM BookIssue bi WHERE bi.status = 'RETURNED' " +
+            "OR (bi.status = 'OVERDUE' AND bi.returnedDate IS NOT NULL)")
+    Page<BookIssue> findReturnedIssues(Pageable pageable);
+
     Page<BookIssue> findByStatus(IssueStatus status, Pageable pageable);
 
     boolean existsByBookEdition_EditionIdAndStatus(String editionId, IssueStatus status);
