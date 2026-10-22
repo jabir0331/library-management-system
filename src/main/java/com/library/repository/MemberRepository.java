@@ -1,7 +1,9 @@
 package com.library.repository;
 
-import com.library.model.Member;
 import com.library.model.Member.MemberStatus;
+import com.library.model.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +19,7 @@ public interface MemberRepository extends JpaRepository<Member, String> {
     Optional<Member> findByEmail(String email);
 
     // Find by status
-    List<Member> findByStatus(MemberStatus status);
+    Page<Member> findByStatus(MemberStatus status, Pageable pageable);
 
     // Check if email exists
     boolean existsByEmail(String email);
@@ -26,7 +28,7 @@ public interface MemberRepository extends JpaRepository<Member, String> {
     @Query("SELECT m FROM Member m WHERE LOWER(m.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(m.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<Member> searchMembers(@Param("keyword") String keyword);
+    Page<Member> searchMembers(@Param("keyword") String keyword, Pageable pageable);
 
     // Find active members
     @Query("SELECT m FROM Member m WHERE m.status = :status")

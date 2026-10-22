@@ -1,11 +1,12 @@
 package com.library.repository;
 
 import com.library.model.Genre;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,5 +19,5 @@ public interface GenreRepository extends JpaRepository<Genre, String> {
     String findLastGenreId();
 
     @Query("SELECT g FROM Genre g WHERE LOWER(g.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<Genre> searchGenres(String keyword);
+    Page<Genre> searchGenres(String keyword, Pageable pageable);
 }

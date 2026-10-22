@@ -16,6 +16,8 @@ import com.library.util.BookIssueIdGenerator;
 import com.library.util.BookIssueReferenceGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +26,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -220,47 +221,39 @@ public class BookIssueServiceImpl implements BookIssueService {
     }
 
     @Override
-    public List<BookIssueResponseDTO> getAllIssues() {
-        return bookIssueRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookIssueResponseDTO> getAllIssues(Pageable pageable) {
+        return bookIssueRepository.findAll(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookIssueResponseDTO> getIssuesByMember(String memberId) {
+    public Page<BookIssueResponseDTO> getIssuesByMember(String memberId, Pageable pageable) {
         if (!memberRepository.existsById(memberId)) {
             throw new ResourceNotFoundException("Member", memberId);
         }
-        return bookIssueRepository.findByMember_MemberId(memberId)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+        return bookIssueRepository.findByMember_MemberId(memberId, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookIssueResponseDTO> getActiveIssuesByMember(String memberId) {
+    public Page<BookIssueResponseDTO> getActiveIssuesByMember(String memberId, Pageable pageable) {
         if (!memberRepository.existsById(memberId)) {
             throw new ResourceNotFoundException("Member", memberId);
         }
-        return bookIssueRepository.findByMember_MemberIdAndStatus(memberId, IssueStatus.ISSUED)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+        return bookIssueRepository.findByMember_MemberIdAndStatus(memberId, IssueStatus.ISSUED, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookIssueResponseDTO> getOverdueIssues() {
-        return bookIssueRepository.findOverdueIssues(LocalDate.now())
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookIssueResponseDTO> getOverdueIssues(Pageable pageable) {
+        return bookIssueRepository.findOverdueIssues(LocalDate.now(), pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookIssueResponseDTO> getIssuesByStatus(IssueStatus status) {
-        // ... implementation
-        return null; // Placeholder
+    public Page<BookIssueResponseDTO> getIssuesByStatus(IssueStatus status, Pageable pageable) {
+        return bookIssueRepository.findByStatus(status, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override

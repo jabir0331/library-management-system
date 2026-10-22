@@ -10,11 +10,10 @@ import com.library.service.GenreService;
 import com.library.util.GenreIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -54,11 +53,9 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public List<GenreResponseDTO> getAllGenres() {
-        return genreRepository.findAll()
-                .stream()
-                .map(genre -> modelMapper.map(genre, GenreResponseDTO.class))
-                .collect(Collectors.toList());
+    public Page<GenreResponseDTO> getAllGenres(Pageable pageable) {
+        return genreRepository.findAll(pageable)
+                .map(genre -> modelMapper.map(genre, GenreResponseDTO.class));
     }
 
     @Override
@@ -85,11 +82,9 @@ public class GenreServiceImpl implements GenreService {
     }
 
     @Override
-    public List<GenreResponseDTO> searchGenres(String keyword) {
-        return genreRepository.searchGenres(keyword)
-                .stream()
-                .map(genre -> modelMapper.map(genre, GenreResponseDTO.class))
-                .collect(Collectors.toList());
+    public Page<GenreResponseDTO> searchGenres(String keyword, Pageable pageable) {
+        return genreRepository.searchGenres(keyword, pageable)
+                .map(genre -> modelMapper.map(genre, GenreResponseDTO.class));
     }
 
     @Override

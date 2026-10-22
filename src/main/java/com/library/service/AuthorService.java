@@ -2,8 +2,8 @@ package com.library.service;
 
 import com.library.dto.request.AuthorRequestDTO;
 import com.library.dto.response.AuthorResponseDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface AuthorService {
 
@@ -13,11 +13,11 @@ public interface AuthorService {
 
     AuthorResponseDTO getAuthorByEmail(String email);
 
-    List<AuthorResponseDTO> getAllAuthors();
+    Page<AuthorResponseDTO> getAllAuthors(Pageable pageable);
 
-    List<AuthorResponseDTO> getActiveAuthors();
+    Page<AuthorResponseDTO> getActiveAuthors(Pageable pageable);
 
-    List<AuthorResponseDTO> getInactiveAuthors();
+    Page<AuthorResponseDTO> getInactiveAuthors(Pageable pageable);
 
     AuthorResponseDTO updateAuthor(String authorId, AuthorRequestDTO request);
 
@@ -27,7 +27,7 @@ public interface AuthorService {
 
     AuthorResponseDTO deactivateAuthor(String authorId);
 
-    List<AuthorResponseDTO> searchAuthors(String keyword);
+    Page<AuthorResponseDTO> searchAuthors(String keyword, Pageable pageable);
 
     boolean existsByEmail(String email);
 }

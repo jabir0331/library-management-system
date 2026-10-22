@@ -1,6 +1,8 @@
 package com.library.repository;
 
 import com.library.model.Admin;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +23,7 @@ public interface AdminRepository extends JpaRepository<Admin, String> {  // Chan
     boolean existsByEmail(String email);
 
     @Query("SELECT a FROM Admin a WHERE a.username LIKE %:keyword% OR a.email LIKE %:keyword%")
-    List<Admin> searchAdmins(@Param("keyword") String keyword);
+    Page<Admin> searchAdmins(@Param("keyword") String keyword, Pageable pageable);
 
     @Query(value = "SELECT * FROM admin WHERE created_at > NOW() - INTERVAL '30 days'", nativeQuery = true)
     List<Admin> findRecentAdmins();

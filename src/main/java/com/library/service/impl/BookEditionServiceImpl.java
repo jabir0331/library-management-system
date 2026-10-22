@@ -12,11 +12,10 @@ import com.library.repository.BookRepository;
 import com.library.service.BookEditionService;
 import com.library.util.BookEditionIdGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,14 +67,12 @@ public class BookEditionServiceImpl implements BookEditionService {
     }
 
     @Override
-    public List<BookEditionResponseDTO> getEditionsByBookId(String bookId) {
+    public Page<BookEditionResponseDTO> getEditionsByBookId(String bookId, Pageable pageable) {
         if (!bookRepository.existsById(bookId)) {
             throw new ResourceNotFoundException("Book", bookId);
         }
-        return bookEditionRepository.findByBook_BookId(bookId)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+        return bookEditionRepository.findByBook_BookId(bookId, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
@@ -141,19 +138,15 @@ public class BookEditionServiceImpl implements BookEditionService {
     }
 
     @Override
-    public List<BookEditionResponseDTO> getEditionsWithAvailableCopies() {
-        return bookEditionRepository.findByAvailableCopiesGreaterThan(0)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookEditionResponseDTO> getEditionsWithAvailableCopies(Pageable pageable) {
+        return bookEditionRepository.findByAvailableCopiesGreaterThan(0, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookEditionResponseDTO> getEditionsByIsbn(String isbn) {
-        return bookEditionRepository.findByIsbnContaining(isbn)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookEditionResponseDTO> getEditionsByIsbn(String isbn, Pageable pageable) {
+        return bookEditionRepository.findByIsbnContaining(isbn, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     // MANUAL MAPPING - No ModelMapper!

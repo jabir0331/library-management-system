@@ -2,8 +2,8 @@ package com.library.service;
 
 import com.library.dto.request.AdminRequestDTO;
 import com.library.dto.response.AdminResponseDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface AdminService {
 
@@ -15,7 +15,7 @@ public interface AdminService {
 
     AdminResponseDTO getAdminByEmail(String email);
 
-    List<AdminResponseDTO> getAllAdmins();
+    Page<AdminResponseDTO> getAllAdmins(Pageable pageable);
 
     AdminResponseDTO updateAdmin(String id, AdminRequestDTO request);  // Changed Long to String
 
@@ -25,5 +25,5 @@ public interface AdminService {
 
     boolean existsByEmail(String email);
 
-    List<AdminResponseDTO> searchAdmins(String keyword);
+    Page<AdminResponseDTO> searchAdmins(String keyword, Pageable pageable);
 }

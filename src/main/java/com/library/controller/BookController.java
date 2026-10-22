@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.dto.request.BookRequestDTO;
 import com.library.dto.response.BookResponseDTO;
+import com.library.dto.response.PageResponse;
 import com.library.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -95,8 +99,9 @@ public class BookController {
                     content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
             )
     })
-    public ResponseEntity<List<BookResponseDTO>> getAllBooks() {
-        return ResponseEntity.ok(bookService.getAllBooks());
+    public ResponseEntity<PageResponse<BookResponseDTO>> getAllBooks(
+            @ParameterObject @PageableDefault(size = 20, sort = "bookId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookService.getAllBooks(pageable)));
     }
 
     // 4. Update Book
@@ -212,10 +217,11 @@ public class BookController {
                     content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
             )
     })
-    public ResponseEntity<List<BookResponseDTO>> searchBooks(
+    public ResponseEntity<PageResponse<BookResponseDTO>> searchBooks(
             @Parameter(description = "Search keyword (matches title or author name)", required = true, example = "Harry")
-            @RequestParam String keyword) {
-        return ResponseEntity.ok(bookService.searchBooks(keyword));
+            @RequestParam String keyword,
+            @ParameterObject @PageableDefault(size = 20, sort = "bookId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookService.searchBooks(keyword, pageable)));
     }
 
     // 8. Get Books by Author
@@ -239,10 +245,11 @@ public class BookController {
                     )
             )
     })
-    public ResponseEntity<List<BookResponseDTO>> getBooksByAuthor(
+    public ResponseEntity<PageResponse<BookResponseDTO>> getBooksByAuthor(
             @Parameter(description = "Author ID (e.g., AUTH000001)", required = true, example = "AUTH000001")
-            @PathVariable String authorId) {
-        return ResponseEntity.ok(bookService.getBooksByAuthor(authorId));
+            @PathVariable String authorId,
+            @ParameterObject @PageableDefault(size = 20, sort = "bookId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookService.getBooksByAuthor(authorId, pageable)));
     }
 
     // 9. Get Books by Genre
@@ -266,10 +273,11 @@ public class BookController {
                     )
             )
     })
-    public ResponseEntity<List<BookResponseDTO>> getBooksByGenre(
+    public ResponseEntity<PageResponse<BookResponseDTO>> getBooksByGenre(
             @Parameter(description = "Genre ID (e.g., GEN000001)", required = true, example = "GEN000001")
-            @PathVariable String genreId) {
-        return ResponseEntity.ok(bookService.getBooksByGenre(genreId));
+            @PathVariable String genreId,
+            @ParameterObject @PageableDefault(size = 20, sort = "bookId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookService.getBooksByGenre(genreId, pageable)));
     }
 
     // 10. Get Available Books
@@ -285,7 +293,8 @@ public class BookController {
                     content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
             )
     })
-    public ResponseEntity<List<BookResponseDTO>> getAvailableBooks() {
-        return ResponseEntity.ok(bookService.getAvailableBooks());
+    public ResponseEntity<PageResponse<BookResponseDTO>> getAvailableBooks(
+            @ParameterObject @PageableDefault(size = 20, sort = "bookId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookService.getAvailableBooks(pageable)));
     }
 }

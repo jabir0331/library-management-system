@@ -3,6 +3,7 @@ package com.library.controller;
 import com.library.dto.request.BookIssueRequestDTO;
 import com.library.dto.request.BookReturnRequestDTO;
 import com.library.dto.response.BookIssueResponseDTO;
+import com.library.dto.response.PageResponse;
 import com.library.model.enums.IssueStatus;
 import com.library.security.AdminPrincipal;
 import com.library.service.BookIssueService;
@@ -16,13 +17,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/book-issues")
@@ -279,8 +283,9 @@ public class BookIssueController {
                     content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
             )
     })
-    public ResponseEntity<List<BookIssueResponseDTO>> getAllIssues() {
-        return ResponseEntity.ok(bookIssueService.getAllIssues());
+    public ResponseEntity<PageResponse<BookIssueResponseDTO>> getAllIssues(
+            @ParameterObject @PageableDefault(size = 20, sort = "issueId", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookIssueService.getAllIssues(pageable)));
     }
 
     // 7. Get issues by member
@@ -304,10 +309,11 @@ public class BookIssueController {
                     )
             )
     })
-    public ResponseEntity<List<BookIssueResponseDTO>> getIssuesByMember(
+    public ResponseEntity<PageResponse<BookIssueResponseDTO>> getIssuesByMember(
             @Parameter(description = "Member ID (e.g., MEM000001)", required = true, example = "MEM000001")
-            @PathVariable String memberId) {
-        return ResponseEntity.ok(bookIssueService.getIssuesByMember(memberId));
+            @PathVariable String memberId,
+            @ParameterObject @PageableDefault(size = 20, sort = "issueId", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookIssueService.getIssuesByMember(memberId, pageable)));
     }
 
     // 8. Get active issues by member
@@ -331,10 +337,11 @@ public class BookIssueController {
                     )
             )
     })
-    public ResponseEntity<List<BookIssueResponseDTO>> getActiveIssuesByMember(
+    public ResponseEntity<PageResponse<BookIssueResponseDTO>> getActiveIssuesByMember(
             @Parameter(description = "Member ID (e.g., MEM000001)", required = true, example = "MEM000001")
-            @PathVariable String memberId) {
-        return ResponseEntity.ok(bookIssueService.getActiveIssuesByMember(memberId));
+            @PathVariable String memberId,
+            @ParameterObject @PageableDefault(size = 20, sort = "issueId", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookIssueService.getActiveIssuesByMember(memberId, pageable)));
     }
 
     // 9. Get overdue issues
@@ -350,8 +357,27 @@ public class BookIssueController {
                     content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
             )
     })
-    public ResponseEntity<List<BookIssueResponseDTO>> getOverdueIssues() {
-        return ResponseEntity.ok(bookIssueService.getOverdueIssues());
+    public ResponseEntity<PageResponse<BookIssueResponseDTO>> getOverdueIssues(
+            @ParameterObject @PageableDefault(size = 20, sort = "issueId", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookIssueService.getOverdueIssues(pageable)));
+    }
+
+    // 9b. Get issues by status
+    @GetMapping("/status/{status}")
+    @Operation(
+            summary = "Get Issues by Status",
+            description = "Retrieves a page of book issues with the given status (ISSUED, RETURNED, OVERDUE or LOST)"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Issues retrieved successfully",
+            content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
+    )
+    public ResponseEntity<PageResponse<BookIssueResponseDTO>> getIssuesByStatus(
+            @Parameter(description = "Issue status: ISSUED, RETURNED, OVERDUE or LOST", required = true, example = "ISSUED")
+            @PathVariable IssueStatus status,
+            @ParameterObject @PageableDefault(size = 20, sort = "issueId", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookIssueService.getIssuesByStatus(status, pageable)));
     }
 
     // 10. Check if member can issue

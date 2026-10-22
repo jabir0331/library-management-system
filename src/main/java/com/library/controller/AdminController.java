@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.dto.request.AdminRequestDTO;
 import com.library.dto.response.AdminResponseDTO;
+import com.library.dto.response.PageResponse;
 import com.library.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -152,8 +156,9 @@ public class AdminController {
                     content = @Content(schema = @Schema(implementation = AdminResponseDTO.class))
             )
     })
-    public ResponseEntity<List<AdminResponseDTO>> getAllAdmins() {
-        List<AdminResponseDTO> admins = adminService.getAllAdmins();
+    public ResponseEntity<PageResponse<AdminResponseDTO>> getAllAdmins(
+            @ParameterObject @PageableDefault(size = 20, sort = "adminId") Pageable pageable) {
+        PageResponse<AdminResponseDTO> admins = PageResponse.from(adminService.getAllAdmins(pageable));
         return ResponseEntity.ok(admins);
     }
 
@@ -235,10 +240,11 @@ public class AdminController {
                     content = @Content(schema = @Schema(implementation = AdminResponseDTO.class))
             )
     })
-    public ResponseEntity<List<AdminResponseDTO>> searchAdmins(
+    public ResponseEntity<PageResponse<AdminResponseDTO>> searchAdmins(
             @Parameter(description = "Search keyword (matches username or email)", required = true, example = "admin")
-            @RequestParam String keyword) {
-        List<AdminResponseDTO> admins = adminService.searchAdmins(keyword);
+            @RequestParam String keyword,
+            @ParameterObject @PageableDefault(size = 20, sort = "adminId") Pageable pageable) {
+        PageResponse<AdminResponseDTO> admins = PageResponse.from(adminService.searchAdmins(keyword, pageable));
         return ResponseEntity.ok(admins);
     }
 

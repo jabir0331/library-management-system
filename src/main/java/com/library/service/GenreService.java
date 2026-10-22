@@ -2,16 +2,16 @@ package com.library.service;
 
 import com.library.dto.request.GenreRequestDTO;
 import com.library.dto.response.GenreResponseDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface GenreService {
     GenreResponseDTO createGenre(GenreRequestDTO request);
     GenreResponseDTO getGenreById(String genreId);
     GenreResponseDTO getGenreByName(String name);
-    List<GenreResponseDTO> getAllGenres();
+    Page<GenreResponseDTO> getAllGenres(Pageable pageable);
     GenreResponseDTO updateGenre(String genreId, GenreRequestDTO request);
     void deleteGenre(String genreId);
-    List<GenreResponseDTO> searchGenres(String keyword);
+    Page<GenreResponseDTO> searchGenres(String keyword, Pageable pageable);
     boolean existsByName(String name);
 }

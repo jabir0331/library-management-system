@@ -1,6 +1,8 @@
 package com.library.repository;
 
 import com.library.model.Author;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,17 +21,17 @@ public interface AuthorRepository extends JpaRepository<Author, String> {
     boolean existsByEmail(String email);
 
     // Find active authors only
-    List<Author> findByIsActiveTrue();
+    Page<Author> findByIsActiveTrue(Pageable pageable);
 
     // Find inactive authors
-    List<Author> findByIsActiveFalse();
+    Page<Author> findByIsActiveFalse(Pageable pageable);
 
     // Search by first name, last name, or email
     @Query("SELECT a FROM Author a WHERE " +
             "LOWER(a.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(a.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(a.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<Author> searchAuthors(@Param("keyword") String keyword);
+    Page<Author> searchAuthors(@Param("keyword") String keyword, Pageable pageable);
 
     // Get the last author ID (for generating next ID)
     @Query("SELECT a.authorId FROM Author a ORDER BY a.authorId DESC LIMIT 1")

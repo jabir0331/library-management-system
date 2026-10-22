@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.dto.request.BookEditionRequestDTO;
 import com.library.dto.response.BookEditionResponseDTO;
+import com.library.dto.response.PageResponse;
 import com.library.service.BookEditionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,11 +14,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/book-editions")
@@ -111,10 +113,11 @@ public class BookEditionController {
                     )
             )
     })
-    public ResponseEntity<List<BookEditionResponseDTO>> getEditionsByBookId(
+    public ResponseEntity<PageResponse<BookEditionResponseDTO>> getEditionsByBookId(
             @Parameter(description = "Book ID (e.g., BK000001)", required = true, example = "BK000001")
-            @PathVariable String bookId) {
-        return ResponseEntity.ok(bookEditionService.getEditionsByBookId(bookId));
+            @PathVariable String bookId,
+            @ParameterObject @PageableDefault(size = 20, sort = "editionId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookEditionService.getEditionsByBookId(bookId, pageable)));
     }
 
     // 4. Update edition
@@ -232,8 +235,9 @@ public class BookEditionController {
                     content = @Content(schema = @Schema(implementation = BookEditionResponseDTO.class))
             )
     })
-    public ResponseEntity<List<BookEditionResponseDTO>> getEditionsWithAvailableCopies() {
-        return ResponseEntity.ok(bookEditionService.getEditionsWithAvailableCopies());
+    public ResponseEntity<PageResponse<BookEditionResponseDTO>> getEditionsWithAvailableCopies(
+            @ParameterObject @PageableDefault(size = 20, sort = "editionId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookEditionService.getEditionsWithAvailableCopies(pageable)));
     }
 
     // 8. Search editions by ISBN
@@ -249,9 +253,10 @@ public class BookEditionController {
                     content = @Content(schema = @Schema(implementation = BookEditionResponseDTO.class))
             )
     })
-    public ResponseEntity<List<BookEditionResponseDTO>> getEditionsByIsbn(
+    public ResponseEntity<PageResponse<BookEditionResponseDTO>> getEditionsByIsbn(
             @Parameter(description = "ISBN to search (full or partial)", required = true, example = "9780747532699")
-            @PathVariable String isbn) {
-        return ResponseEntity.ok(bookEditionService.getEditionsByIsbn(isbn));
+            @PathVariable String isbn,
+            @ParameterObject @PageableDefault(size = 20, sort = "editionId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(bookEditionService.getEditionsByIsbn(isbn, pageable)));
     }
 }

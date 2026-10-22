@@ -4,18 +4,17 @@ import com.library.dto.request.MemberRequestDTO;
 import com.library.dto.response.MemberResponseDTO;
 import com.library.exception.BusinessException;
 import com.library.exception.ResourceNotFoundException;
-import com.library.model.Member;
 import com.library.model.Member.MemberStatus;
+import com.library.model.Member;
 import com.library.repository.MemberRepository;
 import com.library.service.MemberService;
 import com.library.util.MemberIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,19 +65,15 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public List<MemberResponseDTO> getAllMembers() {
-        return memberRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<MemberResponseDTO> getAllMembers(Pageable pageable) {
+        return memberRepository.findAll(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<MemberResponseDTO> getMembersByStatus(MemberStatus status) {
-        return memberRepository.findByStatus(status)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<MemberResponseDTO> getMembersByStatus(MemberStatus status, Pageable pageable) {
+        return memberRepository.findByStatus(status, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
@@ -120,11 +115,9 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public List<MemberResponseDTO> searchMembers(String keyword) {
-        return memberRepository.searchMembers(keyword)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<MemberResponseDTO> searchMembers(String keyword, Pageable pageable) {
+        return memberRepository.searchMembers(keyword, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
