@@ -120,6 +120,21 @@ curl -s -X POST http://localhost:8080/api/auth/logout -H "Authorization: Bearer 
 
 In Swagger UI, use **Authorize** and paste the token from the login response.
 
+## Running the tests
+
+```bash
+./mvnw test
+```
+
+The suite needs no database or environment variables. It covers:
+
+- **Circulation rules** – issue, return and lost flows: borrow limit, inactive members, unavailable copies, fines with and without a grace period, lost-book penalty and copy counts.
+- **Authentication** – JWT creation and validation (tampered, expired and foreign tokens), BCrypt login, upgrade of legacy plain-text passwords, and logout revocation.
+- **Security and error handling** – through the real security filter chain: protected endpoints, revoked tokens, the admin being taken from the token instead of the request body, and the 400/401/404/405/415 error responses.
+- **ID and reference-number generation**, including uniqueness within the same second.
+
+A full-context smoke test (`LibraryManagementApplicationTests`) needs a running PostgreSQL and is skipped unless `RUN_INTEGRATION_TESTS=true` is set.
+
 ## API overview
 
 All endpoints except `POST /api/auth/login` and the Swagger pages require `Authorization: Bearer <token>`.
@@ -155,7 +170,7 @@ Seeded from `src/main/resources/config/seed-data/system-config.txt` on first sta
 
 ## Known limitations / roadmap
 
-- No automated tests beyond the default context-load test yet.
+- Test coverage focuses on the circulation rules, authentication and security; the other CRUD modules (members, authors, genres, books, editions, configs) have no tests yet.
 - Single `ADMIN` role; members are records, not system users.
 - List endpoints are not paginated.
 - Book renewals and fine-payment flow are not implemented (the related config keys are reserved).
