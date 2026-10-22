@@ -44,6 +44,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -143,12 +144,15 @@ class BookIssueServiceImplTest {
 
         @Test
         void issuesBookAndRecordsAdminAndDueDateFromConfig() {
-            BookIssueResponseDTO response = service.issueBook(issueRequest(), "ADM000001");
+            BookIssueRequestDTO request = issueRequest();
+            request.setIssuedDate(LocalDate.now());
+
+            BookIssueResponseDTO response = service.issueBook(request, "ADM000001");
 
             assertThat(response.getIssueId()).isEqualTo("BKI000010");
             assertThat(response.getStatus()).isEqualTo(IssueStatus.ISSUED);
             assertThat(response.getIssuedBy()).isEqualTo("librarian");
-            assertThat(response.getDueDate()).isEqualTo(ISSUED.plusDays(14));
+            assertThat(response.getDueDate()).isEqualTo(LocalDate.now().plusDays(14));
             assertThat(response.getMemberName()).isEqualTo("Ada Lovelace");
             assertThat(response.getBookTitle()).isEqualTo("Clean Code");
             assertThat(edition.getAvailableCopies()).isEqualTo(4);
@@ -189,6 +193,18 @@ class BookIssueServiceImplTest {
             assertThatThrownBy(() -> service.issueBook(issueRequest(), "ADM000001"))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("not active");
+            verify(bookIssueRepository, never()).save(any());
+        }
+
+        @Test
+        void rejectsMemberWhoHasOverdueBooks() {
+            when(bookIssueRepository.countOverdueIssuesByMember(eq("MEM000001"), any(LocalDate.class)))
+                    .thenReturn(2L);
+
+            assertThatThrownBy(() -> service.issueBook(issueRequest(), "ADM000001"))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("2 overdue book(s)");
+            assertThat(edition.getAvailableCopies()).isEqualTo(5);
             verify(bookIssueRepository, never()).save(any());
         }
 
@@ -238,12 +254,14 @@ class BookIssueServiceImplTest {
         }
 
         @Test
-        void lateReturnIsMarkedOverdueWithFinePerDay() {
+        void lateReturnIsStillReturnedAndCarriesTheFine() {
             BookIssue issue = openIssue();
 
             BookIssueResponseDTO response = service.returnBook(returnRequest(DUE.plusDays(5)), "ADM000001");
 
-            assertThat(response.getStatus()).isEqualTo(IssueStatus.OVERDUE);
+            assertThat(response.getStatus()).isEqualTo(IssueStatus.RETURNED);
+            assertThat(issue.getStatus()).isEqualTo(IssueStatus.RETURNED);
+            assertThat(response.isOverdue()).isTrue(); // it was returned late
             assertThat(issue.getFineAmount()).isEqualByComparingTo("125.00"); // 5 days x 25.00
         }
 
@@ -393,6 +411,13 @@ class BookIssueServiceImplTest {
         }
 
         @Test
+        void falseWhenMemberHasOverdueBooks() {
+            when(bookIssueRepository.countOverdueIssuesByMember(eq("MEM000001"), any(LocalDate.class)))
+                    .thenReturn(1L);
+            assertThat(service.canIssueBook("MEM000001", "ED000001")).isFalse();
+        }
+
+        @Test
         void falseAtBorrowLimit() {
             when(bookIssueRepository.countActiveIssuesByMember("MEM000001")).thenReturn(3L);
             assertThat(service.canIssueBook("MEM000001", "ED000001")).isFalse();
@@ -409,17 +434,55 @@ class BookIssueServiceImplTest {
     class Listing {
 
         @Test
-        void issuesByStatusAreMappedAndPaged() {
+        void lostIssuesAreMappedAndPaged() {
             BookIssue issue = openIssue();
+            issue.setStatus(IssueStatus.LOST);
             Pageable pageable = PageRequest.of(0, 10);
-            when(bookIssueRepository.findByStatus(IssueStatus.ISSUED, pageable))
+            when(bookIssueRepository.findByStatus(IssueStatus.LOST, pageable))
                     .thenReturn(new PageImpl<>(List.of(issue), pageable, 1));
 
-            Page<BookIssueResponseDTO> result = service.getIssuesByStatus(IssueStatus.ISSUED, pageable);
+            Page<BookIssueResponseDTO> result = service.getIssuesByStatus(IssueStatus.LOST, pageable);
 
             assertThat(result.getTotalElements()).isEqualTo(1);
             assertThat(result.getContent().get(0).getIssueId()).isEqualTo("BKI000001");
             assertThat(result.getContent().get(0).getBookTitle()).isEqualTo("Clean Code");
+        }
+
+        @Test
+        void overdueFilterReturnsBooksStillOutAndPastDue() {
+            Pageable pageable = PageRequest.of(0, 10);
+            BookIssue late = openIssue();
+            late.setDueDate(LocalDate.now().minusDays(3));
+            when(bookIssueRepository.findOverdueIssues(any(LocalDate.class), eq(pageable)))
+                    .thenReturn(new PageImpl<>(List.of(late), pageable, 1));
+
+            Page<BookIssueResponseDTO> result = service.getIssuesByStatus(IssueStatus.OVERDUE, pageable);
+
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).getStatus()).isEqualTo(IssueStatus.OVERDUE);
+            assertThat(result.getContent().get(0).getDaysOverdue()).isEqualTo(3);
+        }
+
+        @Test
+        void issuedFilterExcludesBooksThatArePastDue() {
+            Pageable pageable = PageRequest.of(0, 10);
+            when(bookIssueRepository.findCurrentIssues(any(LocalDate.class), eq(pageable)))
+                    .thenReturn(Page.empty(pageable));
+
+            service.getIssuesByStatus(IssueStatus.ISSUED, pageable);
+
+            verify(bookIssueRepository).findCurrentIssues(any(LocalDate.class), eq(pageable));
+            verify(bookIssueRepository, never()).findByStatus(any(), any());
+        }
+
+        @Test
+        void returnedFilterUsesTheReturnedQuery() {
+            Pageable pageable = PageRequest.of(0, 10);
+            when(bookIssueRepository.findReturnedIssues(pageable)).thenReturn(Page.empty(pageable));
+
+            service.getIssuesByStatus(IssueStatus.RETURNED, pageable);
+
+            verify(bookIssueRepository).findReturnedIssues(pageable);
         }
 
         @Test
