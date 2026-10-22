@@ -1,0 +1,13 @@
+# System Configuration Seed Data
+# Format: KEY=VALUE|DESCRIPTION|DATATYPE|EDITABLE
+# DATATYPE: STRING, INTEGER, DECIMAL, BOOLEAN, DATE
+
+MAX_ISSUE_DAYS=14|Maximum days a book can be issued|INTEGER|true
+FINE_PER_DAY=25.00|Fine amount per day overdue (in LKR)|DECIMAL|true
+MAX_BOOKS_PER_MEMBER=3|Maximum books a member can borrow|INTEGER|true
+LOST_BOOK_MULTIPLIER=1.5|Multiplier for lost book penalty (price × multiplier)|DECIMAL|true
+SERVICE_CHARGE=250.00|Service charge for lost books (in LKR)|DECIMAL|true
+GRACE_PERIOD_DAYS=0|Grace period before fine applies|INTEGER|true
+MAX_RENEWAL_COUNT=1|Maximum times a book can be renewed|INTEGER|true
+RENEWAL_DAYS=7|Additional days when renewing|INTEGER|true
+MEMBERSHIP_FEE=0.00|Annual membership fee (in LKR)|DECIMAL|true

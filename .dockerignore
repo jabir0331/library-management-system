@@ -1,0 +1,19 @@
+# Build output and tooling
+target/
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+*.iml
+
+# Local secrets must never end up in an image
+.env
+.env.*
+
+# Docs and metadata not needed at build time
+README.md
+HELP.md
+Dockerfile
+docker-compose.yml
+.dockerignore

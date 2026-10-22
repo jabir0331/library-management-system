@@ -1,0 +1,385 @@
+package com.library.service.impl;
+
+import com.library.dto.request.BookIssueRequestDTO;
+import com.library.dto.request.BookReturnRequestDTO;
+import com.library.dto.response.BookIssueResponseDTO;
+import com.library.exception.BusinessException;
+import com.library.exception.ResourceNotFoundException;
+import com.library.exception.ValidationException;
+import com.library.model.*;
+import com.library.model.enums.IssueStatus;
+import com.library.model.enums.ReturnCondition;
+import com.library.repository.*;
+import com.library.service.BookIssueService;
+import com.library.service.SystemConfigService;
+import com.library.util.BookIssueIdGenerator;
+import com.library.util.BookIssueReferenceGenerator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class BookIssueServiceImpl implements BookIssueService {
+
+    private final BookIssueRepository bookIssueRepository;
+    private final MemberRepository memberRepository;
+    private final BookEditionRepository bookEditionRepository;
+    private final AdminRepository adminRepository;
+    private final SystemConfigService configService;
+    private final BookIssueIdGenerator issueIdGenerator;
+    private final BookIssueReferenceGenerator referenceGenerator;
+
+    @Override
+    public BookIssueResponseDTO issueBook(BookIssueRequestDTO request, String issuedById) {
+        log.info("Processing book issue request for member: {}", request.getMemberId());
+
+        // 1. Validate Member
+        Member member = memberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new ResourceNotFoundException("Member", request.getMemberId()));
+
+        if (member.getStatus() != Member.MemberStatus.ACTIVE) {
+            throw new BusinessException("Member is not active. Current status: " + member.getStatus());
+        }
+
+        // Members holding overdue books can't borrow more until they return them
+        long overdueCount = bookIssueRepository.countOverdueIssuesByMember(member.getMemberId(), LocalDate.now());
+        if (overdueCount > 0) {
+            throw new BusinessException("Member has " + overdueCount
+                    + " overdue book(s) and cannot borrow until they are returned");
+        }
+
+        // 2. Validate Book Edition
+        BookEdition edition = bookEditionRepository.findById(request.getBookEditionId())
+                .orElseThrow(() -> new ResourceNotFoundException("BookEdition", request.getBookEditionId()));
+
+        if (edition.getAvailableCopies() <= 0) {
+            throw new BusinessException("No copies available for this edition");
+        }
+
+        // 3. Check if member has reached max books limit
+        int maxBooks = configService.getMaxBooksPerMember();
+        long activeIssues = bookIssueRepository.countActiveIssuesByMember(member.getMemberId());
+        if (activeIssues >= maxBooks) {
+            throw new BusinessException("Member has reached maximum book limit: " + maxBooks);
+        }
+
+        // 4. Validate Admin
+        Admin issuedBy = adminRepository.findById(issuedById)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin", issuedById));
+
+        // 5. Set issue date
+        LocalDate issuedDate = request.getIssuedDate() != null ? request.getIssuedDate() : LocalDate.now();
+
+        // 6. Calculate due date - use provided or calculate from config
+        LocalDate dueDate = request.getDueDate();
+        if (dueDate == null) {
+            int maxIssueDays = configService.getMaxIssueDays();
+            dueDate = issuedDate.plusDays(maxIssueDays);
+        }
+
+        // 7. Validate due date is after issued date
+        if (dueDate.isBefore(issuedDate) || dueDate.isEqual(issuedDate)) {
+            throw new ValidationException("Due date must be after issued date");
+        }
+
+        // 8. Create BookIssue
+        BookIssue issue = new BookIssue();
+        String lastIssueId = bookIssueRepository.findLastIssueId();
+        issue.setIssueId(issueIdGenerator.generateNextId(lastIssueId));
+        issue.setReferenceNumber(referenceGenerator.generateReferenceNumber());
+        issue.setMember(member);
+        issue.setBookEdition(edition);
+        issue.setIssuedBy(issuedBy);
+        issue.setIssuedDate(issuedDate);
+        issue.setDueDate(dueDate);
+        issue.setStatus(IssueStatus.ISSUED);
+
+        // 9. Decrease available copies
+        edition.decrementAvailableCopies();
+        bookEditionRepository.save(edition);
+
+        // 10. Save issue
+        BookIssue savedIssue = bookIssueRepository.save(issue);
+        log.info("Book issued successfully: {}", savedIssue.getReferenceNumber());
+
+        return mapToResponseDTO(savedIssue);
+    }
+
+    @Override
+    public BookIssueResponseDTO returnBook(BookReturnRequestDTO request, String receivedById) {
+        log.info("Processing book return for issue: {}", request.getIssueId());
+
+        // 1. Find issue record
+        BookIssue issue = bookIssueRepository.findById(request.getIssueId())
+                .orElseThrow(() -> new ResourceNotFoundException("BookIssue", request.getIssueId()));
+
+        if (issue.isReturned()) {
+            throw new BusinessException("Book already returned on: " + issue.getReturnedDate());
+        }
+
+        if (issue.isLost()) {
+            throw new BusinessException("Book is marked as lost. Cannot return.");
+        }
+
+        // 2. Validate return date
+        LocalDate returnDate = request.getReturnedDate() != null ?
+                request.getReturnedDate() : LocalDate.now();
+
+        if (returnDate.isBefore(issue.getIssuedDate())) {
+            throw new ValidationException("Return date cannot be before issue date");
+        }
+
+        // 3. Validate Admin
+        Admin receivedBy = adminRepository.findById(receivedById)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin", receivedById));
+
+        // 4. Calculate fine if overdue
+        BigDecimal fineAmount = calculateFine(issue, returnDate);
+
+        // 6. Update issue record
+        issue.setReturnedDate(returnDate);
+        issue.setReceivedBy(receivedBy);
+        issue.setReturnCondition(request.getReturnCondition() != null ?
+                request.getReturnCondition() : ReturnCondition.GOOD);
+        issue.setStatus(IssueStatus.RETURNED); // a late return is still RETURNED; the fine records the lateness
+        issue.setFineAmount(fineAmount);
+
+        // 7. Increase available copies
+        BookEdition edition = issue.getBookEdition();
+        edition.incrementAvailableCopies();
+        bookEditionRepository.save(edition);
+
+        // 8. Save issue
+        BookIssue savedIssue = bookIssueRepository.save(issue);
+        log.info("Book returned successfully: {}", savedIssue.getReferenceNumber());
+
+        return mapToResponseDTO(savedIssue);
+    }
+
+    @Override
+    public BookIssueResponseDTO markBookAsLost(String issueId, String adminId, BigDecimal penaltyAmount) {
+        log.info("Marking book as lost for issue: {}", issueId);
+
+        BookIssue issue = bookIssueRepository.findById(issueId)
+                .orElseThrow(() -> new ResourceNotFoundException("BookIssue", issueId));
+
+        if (issue.isReturned()) {
+            throw new BusinessException("Cannot mark as lost. Book already returned.");
+        }
+
+        if (issue.isLost()) {
+            throw new BusinessException("Book already marked as lost.");
+        }
+
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin", adminId));
+
+        // Calculate penalty if not provided
+        BigDecimal finalPenalty = penaltyAmount != null ?
+                penaltyAmount : calculateLostBookPenalty(issue);
+
+        // Update issue
+        issue.setStatus(IssueStatus.LOST);
+        issue.setLostBookPenalty(finalPenalty);
+        issue.setReturnedDate(LocalDate.now());
+        issue.setReceivedBy(admin);
+        issue.setReturnCondition(ReturnCondition.LOST);
+
+        // The copy is permanently gone, so total drops by one. Available was already
+        // decremented when the book was issued, so it must not be decremented again.
+        BookEdition edition = issue.getBookEdition();
+        edition.setTotalCopies(edition.getTotalCopies() - 1);
+        bookEditionRepository.save(edition);
+
+        BookIssue savedIssue = bookIssueRepository.save(issue);
+        log.info("Book marked as lost: {}", savedIssue.getReferenceNumber());
+
+        return mapToResponseDTO(savedIssue);
+    }
+
+    @Override
+    public BookIssueResponseDTO getIssueById(String issueId) {
+        BookIssue issue = bookIssueRepository.findById(issueId)
+                .orElseThrow(() -> new ResourceNotFoundException("BookIssue", issueId));
+        return mapToResponseDTO(issue);
+    }
+
+    @Override
+    public BookIssueResponseDTO getIssueByReferenceNumber(String referenceNumber) {
+        BookIssue issue = bookIssueRepository.findByReferenceNumber(referenceNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("BookIssue not found with reference: " + referenceNumber));
+        return mapToResponseDTO(issue);
+    }
+
+    @Override
+    public Page<BookIssueResponseDTO> getAllIssues(Pageable pageable) {
+        return bookIssueRepository.findAll(pageable)
+                .map(this::mapToResponseDTO);
+    }
+
+    @Override
+    public Page<BookIssueResponseDTO> getIssuesByMember(String memberId, Pageable pageable) {
+        if (!memberRepository.existsById(memberId)) {
+            throw new ResourceNotFoundException("Member", memberId);
+        }
+        return bookIssueRepository.findByMember_MemberId(memberId, pageable)
+                .map(this::mapToResponseDTO);
+    }
+
+    @Override
+    public Page<BookIssueResponseDTO> getActiveIssuesByMember(String memberId, Pageable pageable) {
+        if (!memberRepository.existsById(memberId)) {
+            throw new ResourceNotFoundException("Member", memberId);
+        }
+        return bookIssueRepository.findByMember_MemberIdAndStatus(memberId, IssueStatus.ISSUED, pageable)
+                .map(this::mapToResponseDTO);
+    }
+
+    @Override
+    public Page<BookIssueResponseDTO> getOverdueIssues(Pageable pageable) {
+        return bookIssueRepository.findOverdueIssues(LocalDate.now(), pageable)
+                .map(this::mapToResponseDTO);
+    }
+
+    @Override
+    public Page<BookIssueResponseDTO> getIssuesByStatus(IssueStatus status, Pageable pageable) {
+        LocalDate today = LocalDate.now();
+        Page<BookIssue> issues = switch (status) {
+            case ISSUED -> bookIssueRepository.findCurrentIssues(today, pageable);
+            case OVERDUE -> bookIssueRepository.findOverdueIssues(today, pageable);
+            case RETURNED -> bookIssueRepository.findReturnedIssues(pageable);
+            case LOST -> bookIssueRepository.findByStatus(IssueStatus.LOST, pageable);
+        };
+        return issues.map(this::mapToResponseDTO);
+    }
+
+    @Override
+    public boolean canIssueBook(String memberId, String bookEditionId) {
+        // Check member status
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member", memberId));
+
+        if (member.getStatus() != Member.MemberStatus.ACTIVE) {
+            return false;
+        }
+
+        // Overdue books block further borrowing
+        if (bookIssueRepository.countOverdueIssuesByMember(memberId, LocalDate.now()) > 0) {
+            return false;
+        }
+
+        // Check active issues count
+        int maxBooks = configService.getMaxBooksPerMember();
+        long activeIssues = bookIssueRepository.countActiveIssuesByMember(memberId);
+        if (activeIssues >= maxBooks) {
+            return false;
+        }
+
+        // Check available copies
+        BookEdition edition = bookEditionRepository.findById(bookEditionId)
+                .orElseThrow(() -> new ResourceNotFoundException("BookEdition", bookEditionId));
+
+        return edition.getAvailableCopies() > 0;
+    }
+
+    @Override
+    public BigDecimal calculateFine(BookIssue issue, LocalDate returnDate) {
+        if (returnDate == null) {
+            returnDate = LocalDate.now();
+        }
+
+        // If returned on or before due date, no fine
+        if (!returnDate.isAfter(issue.getDueDate())) {
+            return BigDecimal.ZERO;
+        }
+
+        // Calculate days overdue
+        long daysOverdue = ChronoUnit.DAYS.between(issue.getDueDate(), returnDate);
+
+        // Apply grace period
+        int gracePeriod = configService.getGracePeriodDays();
+        long daysAfterGrace = daysOverdue - gracePeriod;
+        if (daysAfterGrace <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        // Calculate fine
+        BigDecimal finePerDay = configService.getFinePerDay();
+        BigDecimal fine = finePerDay.multiply(BigDecimal.valueOf(daysAfterGrace));
+        return fine.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    @Override
+    public BigDecimal calculateLostBookPenalty(BookIssue issue) {
+        BigDecimal bookPrice = issue.getBookEdition().getPrice();
+        BigDecimal multiplier = configService.getLostBookMultiplier();
+        BigDecimal serviceCharge = configService.getServiceCharge();
+
+        BigDecimal penalty = bookPrice.multiply(multiplier).add(serviceCharge);
+        return penalty.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    // ═══════════════════════════════════════════════
+    // PRIVATE HELPERS
+    // ═══════════════════════════════════════════════
+
+    private BookIssueResponseDTO mapToResponseDTO(BookIssue issue) {
+        BookIssueResponseDTO response = new BookIssueResponseDTO();
+
+        // Basic info
+        response.setIssueId(issue.getIssueId());
+        response.setReferenceNumber(issue.getReferenceNumber());
+        response.setIssuedDate(issue.getIssuedDate());
+        response.setDueDate(issue.getDueDate());
+        response.setStatus(issue.getEffectiveStatus());
+
+        // Member info
+        response.setMemberId(issue.getMember().getMemberId());
+        response.setMemberName(issue.getMember().getFullName());
+
+        // Book Edition info
+        BookEdition edition = issue.getBookEdition();
+        response.setBookEditionId(edition.getEditionId());
+        response.setBookTitle(edition.getBook().getTitle());
+        response.setIsbn(edition.getIsbn());
+
+        // Admin info
+        response.setIssuedBy(issue.getIssuedBy().getUsername());
+
+        // Return info
+        if (issue.isReturned()) {
+            response.setReturnedDate(issue.getReturnedDate());
+            response.setReturnCondition(issue.getReturnCondition());
+            if (issue.getReceivedBy() != null) {
+                response.setReceivedBy(issue.getReceivedBy().getUsername());
+            }
+        }
+
+        // Financial
+        response.setFineAmount(issue.getFineAmount());
+        response.setFinePaid(issue.isFinePaid());
+        response.setLostBookPenalty(issue.getLostBookPenalty());
+
+        // Calculated fields
+        response.setOverdue(issue.isOverdue());
+        response.setDaysOverdue(issue.getDaysOverdue());
+
+        // Audit
+        response.setCreatedAt(issue.getCreatedAt());
+        response.setUpdatedAt(issue.getUpdatedAt());
+
+        return response;
+    }
+}
