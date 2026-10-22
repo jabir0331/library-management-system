@@ -193,12 +193,10 @@ public class BookIssueServiceImpl implements BookIssueService {
         issue.setReceivedBy(admin);
         issue.setReturnCondition(ReturnCondition.LOST);
 
-        // Decrease total copies (book is permanently lost)
+        // The copy is permanently gone, so total drops by one. Available was already
+        // decremented when the book was issued, so it must not be decremented again.
         BookEdition edition = issue.getBookEdition();
         edition.setTotalCopies(edition.getTotalCopies() - 1);
-        if (edition.getAvailableCopies() > 0) {
-            edition.setAvailableCopies(edition.getAvailableCopies() - 1);
-        }
         bookEditionRepository.save(edition);
 
         BookIssue savedIssue = bookIssueRepository.save(issue);
