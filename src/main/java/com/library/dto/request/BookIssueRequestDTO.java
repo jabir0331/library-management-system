@@ -20,9 +20,6 @@ public class BookIssueRequestDTO implements BaseDTO {
     @NotBlank(message = "Book Edition ID is required")
     private String bookEditionId;
 
-    @NotBlank(message = "Issued by Admin ID is required")
-    private String issuedById;
-
     @NotNull(message = "Issued date is required")
     private LocalDate issuedDate;
 

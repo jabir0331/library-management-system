@@ -21,8 +21,5 @@ public class BookReturnRequestDTO implements BaseDTO {
     @NotNull(message = "Returned date is required")
     private LocalDate returnedDate;
 
-    @NotBlank(message = "Received by Admin ID is required")
-    private String receivedById;
-
     private ReturnCondition returnCondition = ReturnCondition.GOOD;
 }
