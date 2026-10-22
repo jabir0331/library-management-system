@@ -3,11 +3,12 @@ package com.library.service;
 import com.library.dto.request.BookIssueRequestDTO;
 import com.library.dto.request.BookReturnRequestDTO;
 import com.library.dto.response.BookIssueResponseDTO;
-import com.library.model.enums.IssueStatus;
 import com.library.model.BookIssue;
+import com.library.model.enums.IssueStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.time.LocalDate;
 
 public interface BookIssueService {
@@ -28,19 +29,19 @@ public interface BookIssueService {
     BookIssueResponseDTO getIssueByReferenceNumber(String referenceNumber);
 
     // Get all issues
-    List<BookIssueResponseDTO> getAllIssues();
+    Page<BookIssueResponseDTO> getAllIssues(Pageable pageable);
 
     // Get issues by member
-    List<BookIssueResponseDTO> getIssuesByMember(String memberId);
+    Page<BookIssueResponseDTO> getIssuesByMember(String memberId, Pageable pageable);
 
     // Get active issues by member
-    List<BookIssueResponseDTO> getActiveIssuesByMember(String memberId);
+    Page<BookIssueResponseDTO> getActiveIssuesByMember(String memberId, Pageable pageable);
 
     // Get overdue issues
-    List<BookIssueResponseDTO> getOverdueIssues();
+    Page<BookIssueResponseDTO> getOverdueIssues(Pageable pageable);
 
     // Get issues by status
-    List<BookIssueResponseDTO> getIssuesByStatus(IssueStatus status);
+    Page<BookIssueResponseDTO> getIssuesByStatus(IssueStatus status, Pageable pageable);
 
     // Check if member can issue
     boolean canIssueBook(String memberId, String bookEditionId);

@@ -31,9 +31,14 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -397,6 +402,32 @@ class BookIssueServiceImplTest {
         void falseWhenNoCopiesLeft() {
             edition.setAvailableCopies(0);
             assertThat(service.canIssueBook("MEM000001", "ED000001")).isFalse();
+        }
+    }
+
+    @Nested
+    class Listing {
+
+        @Test
+        void issuesByStatusAreMappedAndPaged() {
+            BookIssue issue = openIssue();
+            Pageable pageable = PageRequest.of(0, 10);
+            when(bookIssueRepository.findByStatus(IssueStatus.ISSUED, pageable))
+                    .thenReturn(new PageImpl<>(List.of(issue), pageable, 1));
+
+            Page<BookIssueResponseDTO> result = service.getIssuesByStatus(IssueStatus.ISSUED, pageable);
+
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            assertThat(result.getContent().get(0).getIssueId()).isEqualTo("BKI000001");
+            assertThat(result.getContent().get(0).getBookTitle()).isEqualTo("Clean Code");
+        }
+
+        @Test
+        void issuesOfAnUnknownMemberAreNotFound() {
+            when(memberRepository.existsById("MEM999999")).thenReturn(false);
+
+            assertThatThrownBy(() -> service.getIssuesByMember("MEM999999", PageRequest.of(0, 10)))
+                    .isInstanceOf(ResourceNotFoundException.class);
         }
     }
 

@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.dto.request.GenreRequestDTO;
 import com.library.dto.response.GenreResponseDTO;
+import com.library.dto.response.PageResponse;
 import com.library.service.GenreService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -121,8 +125,9 @@ public class GenreController {
                     content = @Content(schema = @Schema(implementation = GenreResponseDTO.class))
             )
     })
-    public ResponseEntity<List<GenreResponseDTO>> getAllGenres() {
-        return ResponseEntity.ok(genreService.getAllGenres());
+    public ResponseEntity<PageResponse<GenreResponseDTO>> getAllGenres(
+            @ParameterObject @PageableDefault(size = 20, sort = "genreId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(genreService.getAllGenres(pageable)));
     }
 
     // 5. Update Genre
@@ -202,10 +207,11 @@ public class GenreController {
                     content = @Content(schema = @Schema(implementation = GenreResponseDTO.class))
             )
     })
-    public ResponseEntity<List<GenreResponseDTO>> searchGenres(
+    public ResponseEntity<PageResponse<GenreResponseDTO>> searchGenres(
             @Parameter(description = "Search keyword (matches genre name)", required = true, example = "Fict")
-            @RequestParam String keyword) {
-        return ResponseEntity.ok(genreService.searchGenres(keyword));
+            @RequestParam String keyword,
+            @ParameterObject @PageableDefault(size = 20, sort = "genreId") Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(genreService.searchGenres(keyword, pageable)));
     }
 
     // 8. Check if Genre Name Exists

@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.dto.request.MemberRequestDTO;
 import com.library.dto.response.MemberResponseDTO;
+import com.library.dto.response.PageResponse;
 import com.library.model.Member.MemberStatus;
 import com.library.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,6 +15,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -125,8 +129,9 @@ public class MemberController {
                     content = @Content(schema = @Schema(implementation = MemberResponseDTO.class))
             )
     })
-    public ResponseEntity<List<MemberResponseDTO>> getAllMembers() {
-        List<MemberResponseDTO> members = memberService.getAllMembers();
+    public ResponseEntity<PageResponse<MemberResponseDTO>> getAllMembers(
+            @ParameterObject @PageableDefault(size = 20, sort = "memberId") Pageable pageable) {
+        PageResponse<MemberResponseDTO> members = PageResponse.from(memberService.getAllMembers(pageable));
         return ResponseEntity.ok(members);
     }
 
@@ -151,10 +156,11 @@ public class MemberController {
                     )
             )
     })
-    public ResponseEntity<List<MemberResponseDTO>> getMembersByStatus(
+    public ResponseEntity<PageResponse<MemberResponseDTO>> getMembersByStatus(
             @Parameter(description = "Member status: ACTIVE, SUSPENDED, or INACTIVE", required = true, example = "ACTIVE")
-            @PathVariable MemberStatus status) {
-        List<MemberResponseDTO> members = memberService.getMembersByStatus(status);
+            @PathVariable MemberStatus status,
+            @ParameterObject @PageableDefault(size = 20, sort = "memberId") Pageable pageable) {
+        PageResponse<MemberResponseDTO> members = PageResponse.from(memberService.getMembersByStatus(status, pageable));
         return ResponseEntity.ok(members);
     }
 
@@ -274,10 +280,11 @@ public class MemberController {
                     content = @Content(schema = @Schema(implementation = MemberResponseDTO.class))
             )
     })
-    public ResponseEntity<List<MemberResponseDTO>> searchMembers(
+    public ResponseEntity<PageResponse<MemberResponseDTO>> searchMembers(
             @Parameter(description = "Search keyword (matches name or email)", required = true, example = "John")
-            @RequestParam String keyword) {
-        List<MemberResponseDTO> members = memberService.searchMembers(keyword);
+            @RequestParam String keyword,
+            @ParameterObject @PageableDefault(size = 20, sort = "memberId") Pageable pageable) {
+        PageResponse<MemberResponseDTO> members = PageResponse.from(memberService.searchMembers(keyword, pageable));
         return ResponseEntity.ok(members);
     }
 

@@ -17,12 +17,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -85,7 +85,7 @@ class SecurityWebTest {
 
     @Test
     void validTokenGrantsAccess() throws Exception {
-        when(memberService.getAllMembers()).thenReturn(List.of());
+        when(memberService.getAllMembers(any())).thenReturn(Page.empty());
 
         mockMvc.perform(get("/api/members").header("Authorization", bearer(token)))
                 .andExpect(status().isOk());

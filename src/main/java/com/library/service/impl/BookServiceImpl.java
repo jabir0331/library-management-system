@@ -15,6 +15,8 @@ import com.library.repository.GenreRepository;
 import com.library.service.BookService;
 import com.library.util.BookIdGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,11 +69,9 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<BookResponseDTO> getAllBooks() {
-        return bookRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookResponseDTO> getAllBooks(Pageable pageable) {
+        return bookRepository.findAll(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
@@ -125,41 +125,33 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<BookResponseDTO> searchBooks(String keyword) {
-        return bookRepository.searchBooks(keyword)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookResponseDTO> searchBooks(String keyword, Pageable pageable) {
+        return bookRepository.searchBooks(keyword, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookResponseDTO> getBooksByAuthor(String authorId) {
+    public Page<BookResponseDTO> getBooksByAuthor(String authorId, Pageable pageable) {
         if (!authorRepository.existsById(authorId)) {
             throw new ResourceNotFoundException("Author", authorId);
         }
-        return bookRepository.findByAuthor_AuthorId(authorId)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+        return bookRepository.findByAuthor_AuthorId(authorId, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookResponseDTO> getBooksByGenre(String genreId) {
+    public Page<BookResponseDTO> getBooksByGenre(String genreId, Pageable pageable) {
         if (!genreRepository.existsById(genreId)) {
             throw new ResourceNotFoundException("Genre", genreId);
         }
-        return bookRepository.findByGenre_GenreId(genreId)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+        return bookRepository.findByGenre_GenreId(genreId, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<BookResponseDTO> getAvailableBooks() {
-        return bookRepository.findByIsAvailableTrue()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<BookResponseDTO> getAvailableBooks(Pageable pageable) {
+        return bookRepository.findByIsAvailableTrue(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     // ⭐ MANUAL MAPPING

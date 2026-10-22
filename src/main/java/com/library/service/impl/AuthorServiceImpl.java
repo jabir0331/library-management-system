@@ -10,11 +10,10 @@ import com.library.service.AuthorService;
 import com.library.util.AuthorIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,27 +64,21 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public List<AuthorResponseDTO> getAllAuthors() {
-        return authorRepository.findAll()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<AuthorResponseDTO> getAllAuthors(Pageable pageable) {
+        return authorRepository.findAll(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<AuthorResponseDTO> getActiveAuthors() {
-        return authorRepository.findByIsActiveTrue()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<AuthorResponseDTO> getActiveAuthors(Pageable pageable) {
+        return authorRepository.findByIsActiveTrue(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
-    public List<AuthorResponseDTO> getInactiveAuthors() {
-        return authorRepository.findByIsActiveFalse()
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<AuthorResponseDTO> getInactiveAuthors(Pageable pageable) {
+        return authorRepository.findByIsActiveFalse(pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
@@ -144,11 +137,9 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public List<AuthorResponseDTO> searchAuthors(String keyword) {
-        return authorRepository.searchAuthors(keyword)
-                .stream()
-                .map(this::mapToResponseDTO)
-                .collect(Collectors.toList());
+    public Page<AuthorResponseDTO> searchAuthors(String keyword, Pageable pageable) {
+        return authorRepository.searchAuthors(keyword, pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override

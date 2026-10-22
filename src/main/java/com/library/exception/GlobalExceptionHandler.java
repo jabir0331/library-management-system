@@ -1,6 +1,7 @@
 package com.library.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -155,6 +156,16 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Bad Request",
                 "Missing required parameter: " + ex.getParameterName()
+        );
+    }
+
+    // Raised when a ?sort= field does not exist on the entity
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidSortProperty(PropertyReferenceException ex) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Bad Request",
+                "Invalid sort property: " + ex.getPropertyName()
         );
     }
 

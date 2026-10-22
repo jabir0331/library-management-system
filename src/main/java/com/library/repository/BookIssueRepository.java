@@ -2,6 +2,8 @@ package com.library.repository;
 
 import com.library.model.BookIssue;
 import com.library.model.enums.IssueStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,18 +21,20 @@ public interface BookIssueRepository extends JpaRepository<BookIssue, String> {
 
     Optional<BookIssue> findByReferenceNumber(String referenceNumber);
 
-    List<BookIssue> findByMember_MemberIdAndStatus(String memberId, IssueStatus status);
+    Page<BookIssue> findByMember_MemberIdAndStatus(String memberId, IssueStatus status, Pageable pageable);
 
     List<BookIssue> findByBookEdition_EditionIdAndStatus(String editionId, IssueStatus status);
 
     @Query("SELECT bi FROM BookIssue bi WHERE bi.member.memberId = :memberId")
-    List<BookIssue> findByMember_MemberId(@Param("memberId") String memberId);
+    Page<BookIssue> findByMember_MemberId(@Param("memberId") String memberId, Pageable pageable);
 
     @Query("SELECT COUNT(bi) FROM BookIssue bi WHERE bi.member.memberId = :memberId AND bi.status = 'ISSUED'")
     long countActiveIssuesByMember(@Param("memberId") String memberId);
 
     @Query("SELECT bi FROM BookIssue bi WHERE bi.dueDate < :currentDate AND bi.status = 'ISSUED'")
-    List<BookIssue> findOverdueIssues(@Param("currentDate") LocalDate currentDate);
+    Page<BookIssue> findOverdueIssues(@Param("currentDate") LocalDate currentDate, Pageable pageable);
+
+    Page<BookIssue> findByStatus(IssueStatus status, Pageable pageable);
 
     boolean existsByBookEdition_EditionIdAndStatus(String editionId, IssueStatus status);
 }

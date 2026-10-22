@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.dto.request.AuthorRequestDTO;
 import com.library.dto.response.AuthorResponseDTO;
+import com.library.dto.response.PageResponse;
 import com.library.service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -124,8 +128,9 @@ public class AuthorController {
                     content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
             )
     })
-    public ResponseEntity<List<AuthorResponseDTO>> getAllAuthors() {
-        List<AuthorResponseDTO> authors = authorService.getAllAuthors();
+    public ResponseEntity<PageResponse<AuthorResponseDTO>> getAllAuthors(
+            @ParameterObject @PageableDefault(size = 20, sort = "authorId") Pageable pageable) {
+        PageResponse<AuthorResponseDTO> authors = PageResponse.from(authorService.getAllAuthors(pageable));
         return ResponseEntity.ok(authors);
     }
 
@@ -142,8 +147,9 @@ public class AuthorController {
                     content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
             )
     })
-    public ResponseEntity<List<AuthorResponseDTO>> getActiveAuthors() {
-        List<AuthorResponseDTO> authors = authorService.getActiveAuthors();
+    public ResponseEntity<PageResponse<AuthorResponseDTO>> getActiveAuthors(
+            @ParameterObject @PageableDefault(size = 20, sort = "authorId") Pageable pageable) {
+        PageResponse<AuthorResponseDTO> authors = PageResponse.from(authorService.getActiveAuthors(pageable));
         return ResponseEntity.ok(authors);
     }
 
@@ -160,8 +166,9 @@ public class AuthorController {
                     content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
             )
     })
-    public ResponseEntity<List<AuthorResponseDTO>> getInactiveAuthors() {
-        List<AuthorResponseDTO> authors = authorService.getInactiveAuthors();
+    public ResponseEntity<PageResponse<AuthorResponseDTO>> getInactiveAuthors(
+            @ParameterObject @PageableDefault(size = 20, sort = "authorId") Pageable pageable) {
+        PageResponse<AuthorResponseDTO> authors = PageResponse.from(authorService.getInactiveAuthors(pageable));
         return ResponseEntity.ok(authors);
     }
 
@@ -299,10 +306,11 @@ public class AuthorController {
                     content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
             )
     })
-    public ResponseEntity<List<AuthorResponseDTO>> searchAuthors(
+    public ResponseEntity<PageResponse<AuthorResponseDTO>> searchAuthors(
             @Parameter(description = "Search keyword (matches name or email)", required = true, example = "Rowling")
-            @RequestParam String keyword) {
-        List<AuthorResponseDTO> authors = authorService.searchAuthors(keyword);
+            @RequestParam String keyword,
+            @ParameterObject @PageableDefault(size = 20, sort = "authorId") Pageable pageable) {
+        PageResponse<AuthorResponseDTO> authors = PageResponse.from(authorService.searchAuthors(keyword, pageable));
         return ResponseEntity.ok(authors);
     }
 
