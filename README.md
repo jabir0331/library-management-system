@@ -72,6 +72,7 @@ This starts PostgreSQL and the API. The API is at `http://localhost:8080` and Sw
 
 - Database files live in the `library_pgdata` volume, so data survives restarts. `docker compose down -v` deletes it.
 - Compose points the app at its own database container, so `DB_URL` in `.env` is ignored there.
+- If port 8080 is already in use, set `APP_PORT` (for example `APP_PORT=8082`) in `.env`.
 - To reach the database from your machine, uncomment the `ports` section of the `db` service.
 
 ### Without Docker

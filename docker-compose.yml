@@ -25,7 +25,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"   # change APP_PORT in .env if 8080 is already in use
     environment:
       # Inside the compose network the database host is `db`, not localhost
       DB_URL: jdbc:postgresql://db:5432/library_db
