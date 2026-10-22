@@ -116,13 +116,12 @@ public class GenreController {
     @GetMapping
     @Operation(
             summary = "Get All Genres",
-            description = "Retrieves a list of all genres"
+            description = "Retrieves a page of genres"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "List of genres retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = GenreResponseDTO.class))
+                    description = "Page of genres retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<GenreResponseDTO>> getAllGenres(
@@ -203,8 +202,7 @@ public class GenreController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Search results retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = GenreResponseDTO.class))
+                    description = "Search results retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<GenreResponseDTO>> searchGenres(

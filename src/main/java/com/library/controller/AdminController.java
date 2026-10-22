@@ -147,13 +147,12 @@ public class AdminController {
     @GetMapping
     @Operation(
             summary = "Get All Admins",
-            description = "Retrieves a list of all administrators"
+            description = "Retrieves a page of administrators"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "List of admins retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = AdminResponseDTO.class))
+                    description = "Page of admins retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<AdminResponseDTO>> getAllAdmins(
@@ -236,8 +235,7 @@ public class AdminController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Search results retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = AdminResponseDTO.class))
+                    description = "Search results retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<AdminResponseDTO>> searchAdmins(

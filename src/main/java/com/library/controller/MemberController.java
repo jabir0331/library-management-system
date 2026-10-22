@@ -120,13 +120,12 @@ public class MemberController {
     @GetMapping
     @Operation(
             summary = "Get All Members",
-            description = "Retrieves a list of all library members"
+            description = "Retrieves a page of library members"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "List of members retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = MemberResponseDTO.class))
+                    description = "Page of members retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<MemberResponseDTO>> getAllMembers(
@@ -144,8 +143,7 @@ public class MemberController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Members retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = MemberResponseDTO.class))
+                    description = "Members retrieved successfully"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -276,8 +274,7 @@ public class MemberController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Search results retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = MemberResponseDTO.class))
+                    description = "Search results retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<MemberResponseDTO>> searchMembers(

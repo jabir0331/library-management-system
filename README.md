@@ -106,15 +106,15 @@ curl -s -X POST http://localhost:8080/api/auth/login \
   -d '{"username":"admin","password":"<your bootstrap password>"}'
 # → {"token":"eyJ...","tokenType":"Bearer","expiresInMs":3600000,"adminId":"ADM000001","username":"admin"}
 
-# 2. Issue a book (the issuing admin comes from the token)
+# 2. Issue a book (admin comes from the token; due date defaults to issue date + 14 days)
 curl -s -X POST http://localhost:8080/api/book-issues/issue \
   -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
-  -d '{"memberId":"MEM000001","bookEditionId":"ED000001","issuedDate":"2026-07-20"}'
+  -d "{\"memberId\":\"MEM000001\",\"bookEditionId\":\"ED000001\",\"issuedDate\":\"$(date +%F)\"}"
 
-# 3. Return it
+# 3. Return it (a late return records a fine)
 curl -s -X POST http://localhost:8080/api/book-issues/return \
   -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
-  -d '{"issueId":"BKI000001","returnedDate":"2026-07-22","returnCondition":"GOOD"}'
+  -d "{\"issueId\":\"BKI000001\",\"returnedDate\":\"$(date +%F)\",\"returnCondition\":\"GOOD\"}"
 
 # 4. Log out (revokes the token)
 curl -s -X POST http://localhost:8080/api/auth/logout -H "Authorization: Bearer <token>"
@@ -133,6 +133,8 @@ The suite needs no database or environment variables. It covers:
 - **Circulation rules** – issue, return and lost flows: borrow limit, inactive members, unavailable copies, fines with and without a grace period, lost-book penalty and copy counts.
 - **Authentication** – JWT creation and validation (tampered, expired and foreign tokens), BCrypt login, upgrade of legacy plain-text passwords, and logout revocation.
 - **Security and error handling** – through the real security filter chain: protected endpoints, revoked tokens, the admin being taken from the token instead of the request body, and the 400/401/404/405/415 error responses.
+- **Pagination** – the page envelope, default size and sort, the page-size cap and sort handling.
+- **Overdue handling** – the derived `OVERDUE` status, the status filters and the borrowing block for members with overdue books.
 - **ID and reference-number generation**, including uniqueness within the same second.
 
 A full-context smoke test (`LibraryManagementApplicationTests`) needs a running PostgreSQL and is skipped unless `RUN_INTEGRATION_TESTS=true` is set.
@@ -181,7 +183,7 @@ All endpoints except `POST /api/auth/login` and the Swagger pages require `Autho
 | Book issues | `/api/book-issues` | `POST /issue`, `POST /return`, `PATCH /{id}/lost`, by member, active, overdue, by status, `GET /can-issue` |
 | System config | `/api/configs` | list, get/update by key, add/delete keys, re-seed |
 
-The complete, interactive reference (request/response schemas and examples) is in Swagger UI.
+The complete, interactive reference (request/response schemas and examples) is in Swagger UI, which also documents the 401 response returned when the token is missing or invalid.
 
 ## Issue statuses
 
