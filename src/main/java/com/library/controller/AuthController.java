@@ -4,6 +4,8 @@ import com.library.dto.request.LoginRequestDTO;
 import com.library.dto.response.AuthResponseDTO;
 import com.library.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,6 +29,11 @@ public class AuthController {
     @PostMapping("/login")
     @SecurityRequirements
     @Operation(summary = "Login", description = "Authenticates an admin and returns a JWT bearer token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authenticated, token returned"),
+            @ApiResponse(responseCode = "400", description = "Username or password missing"),
+            @ApiResponse(responseCode = "401", description = "Invalid username or password")
+    })
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
         return ResponseEntity.ok(authService.login(request));
     }

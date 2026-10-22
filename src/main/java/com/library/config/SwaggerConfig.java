@@ -7,6 +7,8 @@ import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,6 +16,18 @@ import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
+
+    /** Every endpoint except login requires a token, so document the 401 once instead of per method. */
+    @Bean
+    public OpenApiCustomizer unauthorizedResponseCustomizer() {
+        return openApi -> openApi.getPaths().forEach((path, item) -> {
+            if (path.equals("/api/auth/login")) {
+                return;
+            }
+            item.readOperations().forEach(operation -> operation.getResponses().computeIfAbsent("401",
+                    code -> new ApiResponse().description("Missing, invalid, expired or revoked token")));
+        });
+    }
 
     @Bean
     public OpenAPI libraryManagementOpenAPI() {

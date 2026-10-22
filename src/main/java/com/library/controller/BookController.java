@@ -90,13 +90,12 @@ public class BookController {
     @GetMapping
     @Operation(
             summary = "Get All Books",
-            description = "Retrieves a list of all books with their editions"
+            description = "Retrieves a page of books with their editions"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "List of books retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
+                    description = "Page of books retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<BookResponseDTO>> getAllBooks(
@@ -213,8 +212,7 @@ public class BookController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Search results retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
+                    description = "Search results retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<BookResponseDTO>> searchBooks(
@@ -228,13 +226,12 @@ public class BookController {
     @GetMapping("/author/{authorId}")
     @Operation(
             summary = "Get Books by Author",
-            description = "Retrieves all books written by a specific author"
+            description = "Retrieves a page of books written by a specific author"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Books retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
+                    description = "Books retrieved successfully"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -256,13 +253,12 @@ public class BookController {
     @GetMapping("/genre/{genreId}")
     @Operation(
             summary = "Get Books by Genre",
-            description = "Retrieves all books belonging to a specific genre"
+            description = "Retrieves a page of books belonging to a specific genre"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Books retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
+                    description = "Books retrieved successfully"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -284,13 +280,12 @@ public class BookController {
     @GetMapping("/available")
     @Operation(
             summary = "Get Available Books",
-            description = "Retrieves all books that are currently available for borrowing (isAvailable = true)"
+            description = "Retrieves a page of books that are currently available for borrowing (isAvailable = true)"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Available books retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookResponseDTO.class))
+                    description = "Available books retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<BookResponseDTO>> getAvailableBooks(

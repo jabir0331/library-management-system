@@ -275,13 +275,12 @@ public class BookIssueController {
     @GetMapping
     @Operation(
             summary = "Get All Book Issues",
-            description = "Retrieves a list of all book issues (including active, returned, overdue, lost)"
+            description = "Retrieves a page of book issues (including active, returned, overdue, lost)"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Issues retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
+                    description = "Issues retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<BookIssueResponseDTO>> getAllIssues(
@@ -293,13 +292,12 @@ public class BookIssueController {
     @GetMapping("/member/{memberId}")
     @Operation(
             summary = "Get All Issues by Member",
-            description = "Retrieves all book issues (past and present) for a specific member"
+            description = "Retrieves a page of book issues (past and present) for a specific member"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Issues retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
+                    description = "Issues retrieved successfully"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -326,8 +324,7 @@ public class BookIssueController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Active issues retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
+                    description = "Active issues retrieved successfully"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -349,13 +346,12 @@ public class BookIssueController {
     @GetMapping("/overdue")
     @Operation(
             summary = "Get Overdue Issues",
-            description = "Retrieves all book issues that are currently overdue (due date has passed and book not returned)"
+            description = "Retrieves a page of book issues that are currently overdue (due date has passed and book not returned)"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Overdue issues retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
+                    description = "Overdue issues retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<BookIssueResponseDTO>> getOverdueIssues(
@@ -371,8 +367,7 @@ public class BookIssueController {
     )
     @ApiResponse(
             responseCode = "200",
-            description = "Issues retrieved successfully",
-            content = @Content(schema = @Schema(implementation = BookIssueResponseDTO.class))
+            description = "Issues retrieved successfully"
     )
     public ResponseEntity<PageResponse<BookIssueResponseDTO>> getIssuesByStatus(
             @Parameter(description = "Issue status: ISSUED, RETURNED, OVERDUE or LOST", required = true, example = "ISSUED")

@@ -96,13 +96,12 @@ public class BookEditionController {
     @GetMapping("/book/{bookId}")
     @Operation(
             summary = "Get All Editions of a Book",
-            description = "Retrieves all editions belonging to a specific book (e.g., different years, publishers)"
+            description = "Retrieves a page of editions belonging to a specific book (e.g., different years, publishers)"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Editions retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookEditionResponseDTO.class))
+                    description = "Editions retrieved successfully"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -226,13 +225,12 @@ public class BookEditionController {
     @GetMapping("/available")
     @Operation(
             summary = "Get Editions with Available Copies",
-            description = "Retrieves all editions that have at least one available copy (availableCopies > 0)"
+            description = "Retrieves a page of editions that have at least one available copy (availableCopies > 0)"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Editions retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookEditionResponseDTO.class))
+                    description = "Editions retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<BookEditionResponseDTO>> getEditionsWithAvailableCopies(
@@ -249,8 +247,7 @@ public class BookEditionController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Editions retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = BookEditionResponseDTO.class))
+                    description = "Editions retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<BookEditionResponseDTO>> getEditionsByIsbn(

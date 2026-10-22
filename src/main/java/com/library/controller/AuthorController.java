@@ -119,13 +119,12 @@ public class AuthorController {
     @GetMapping
     @Operation(
             summary = "Get All Authors",
-            description = "Retrieves a list of all authors (both active and inactive)"
+            description = "Retrieves a page of authors (both active and inactive)"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "List of authors retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
+                    description = "Page of authors retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<AuthorResponseDTO>> getAllAuthors(
@@ -138,13 +137,12 @@ public class AuthorController {
     @GetMapping("/active")
     @Operation(
             summary = "Get Active Authors Only",
-            description = "Retrieves a list of authors with isActive = true"
+            description = "Retrieves a page of authors with isActive = true"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "List of active authors retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
+                    description = "Page of active authors retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<AuthorResponseDTO>> getActiveAuthors(
@@ -157,13 +155,12 @@ public class AuthorController {
     @GetMapping("/inactive")
     @Operation(
             summary = "Get Inactive Authors Only",
-            description = "Retrieves a list of authors with isActive = false"
+            description = "Retrieves a page of authors with isActive = false"
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "List of inactive authors retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
+                    description = "Page of inactive authors retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<AuthorResponseDTO>> getInactiveAuthors(
@@ -302,8 +299,7 @@ public class AuthorController {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Search results retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = AuthorResponseDTO.class))
+                    description = "Search results retrieved successfully"
             )
     })
     public ResponseEntity<PageResponse<AuthorResponseDTO>> searchAuthors(
