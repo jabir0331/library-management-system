@@ -233,6 +233,15 @@ Seeded from `src/main/resources/config/seed-data/system-config.txt` on first sta
 
 `MAX_RENEWAL_COUNT`, `RENEWAL_DAYS` and `MEMBERSHIP_FEE` are also seeded but not used yet (see below).
 
+## Development workflow
+
+The project was built incrementally, one reviewed change at a time:
+
+- **Branches** – `main` holds tagged releases and `dev` is the integration branch. Every change is developed on a short-lived branch cut from `dev` (`feature/*`, `chore/*`, `docs/*` or `test/*`), opened as a pull request into `dev`, and deleted after the merge. `dev` is merged into `main` for a release.
+- **Commits** – [Conventional Commits](https://www.conventionalcommits.org/) style (`feat:`, `fix:`, `chore:`, `docs:`, `test:`) with a short bullet list explaining the change.
+- **Pull requests** – each one has a descriptive title and a bullet-point summary, including any migration or breaking-change notes. The full history is in the [closed pull requests](https://github.com/jabir0331/library-management-system/pulls?q=is%3Apr+is%3Aclosed).
+- **Releases** – versions are annotated git tags; see the [tags](https://github.com/jabir0331/library-management-system/tags).
+
 ## Known limitations / roadmap
 
 - Test coverage focuses on the circulation rules, authentication and security; the other CRUD modules (members, authors, genres, books, editions, configs) have no tests yet.
