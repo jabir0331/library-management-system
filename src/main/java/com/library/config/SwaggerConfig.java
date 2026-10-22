@@ -3,7 +3,6 @@ package com.library.config;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -24,22 +23,15 @@ public class SwaggerConfig {
                         new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")))
                 .info(new Info()
                         .title("Library Management System API")
-                        .description("Complete REST API for Library Management System")
+                        .description("REST API for managing library members, books and editions, and the borrowing cycle (issue, return, fines, lost books). Authenticate with POST /api/auth/login, then use the token via the Authorize button.")
                         .version("v1.0.0")
                         .contact(new Contact()
-                                .name("Library Management Team")
-                                .email("support@library.com")
-                                .url("https://library-management-system.com"))
-                        .license(new License()
-                                .name("MIT License")
-                                .url("https://opensource.org/licenses/MIT")))
+                                .name("Nihmath Jabir")
+                                .url("https://github.com/jabir0331/library-management-system")))
                 .servers(List.of(
                         new Server()
                                 .url("http://localhost:8080")
-                                .description("Development Server"),
-                        new Server()
-                                .url("https://api.library-management-system.com")
-                                .description("Production Server")
+                                .description("Local development server")
                 ));
     }
 }
