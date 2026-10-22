@@ -33,6 +33,7 @@ Built with **Spring Boot 4.1**, **Java 21**, **Spring Security (JWT)**, **Spring
 | Mapping / boilerplate | ModelMapper, Lombok |
 | API docs | springdoc-openapi (Swagger UI) |
 | Build | Maven (wrapper included) |
+| Packaging | Docker (multi-stage image) and Docker Compose |
 
 ## Architecture
 
@@ -57,6 +58,24 @@ Code lives under `src/main/java/com/library/`:
 | `config` | ModelMapper, Swagger and first-admin bootstrap |
 
 ## Getting started
+
+### With Docker (no Java or PostgreSQL needed)
+
+Requires Docker with Compose.
+
+```bash
+cp .env.example .env     # then set DB_PASSWORD, JWT_SECRET and BOOTSTRAP_ADMIN_PASSWORD
+docker compose up --build
+```
+
+This starts PostgreSQL and the API. The API is at `http://localhost:8080` and Swagger UI at `http://localhost:8080/swagger-ui.html`; log in with `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD` (the first admin is created when the database is empty).
+
+- Database files live in the `library_pgdata` volume, so data survives restarts. `docker compose down -v` deletes it.
+- Compose points the app at its own database container, so `DB_URL` in `.env` is ignored there.
+- If port 8080 is already in use, set `APP_PORT` (for example `APP_PORT=8082`) in `.env`.
+- To reach the database from your machine, uncomment the `ports` section of the `db` service.
+
+### Without Docker
 
 ### Prerequisites
 - JDK 21
