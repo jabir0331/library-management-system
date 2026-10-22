@@ -11,6 +11,7 @@ import com.library.service.AdminService;
 import com.library.util.AdminIdGenerator;  // NEW import
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class AdminServiceImpl implements AdminService {
     private final AdminRepository adminRepository;
     private final ModelMapper modelMapper;
     private final AdminIdGenerator adminIdGenerator;  // NEW dependency
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public AdminResponseDTO createAdmin(AdminRequestDTO request) {
@@ -40,6 +42,8 @@ public class AdminServiceImpl implements AdminService {
 
         // Convert DTO to Entity
         Admin admin = modelMapper.map(request, Admin.class);
+
+        admin.setPassword(passwordEncoder.encode(request.getPassword()));
 
         // Generate custom ID
         String lastId = adminRepository.findLastAdminId();
@@ -102,7 +106,7 @@ public class AdminServiceImpl implements AdminService {
         // Update fields
         existingAdmin.setUsername(request.getUsername());
         existingAdmin.setEmail(request.getEmail());
-        existingAdmin.setPassword(request.getPassword()); // TODO: Encrypt later
+        existingAdmin.setPassword(passwordEncoder.encode(request.getPassword()));
 
         // Save updated admin
         Admin updatedAdmin = adminRepository.save(existingAdmin);
