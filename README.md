@@ -110,10 +110,6 @@ cp .env.example .env
 ```
 The API is at `http://localhost:8080` and Swagger UI at `http://localhost:8080/swagger-ui.html`.
 
-> **Upgrading an existing database?** Password hashes need more room than the old column allowed. Run once:
-> `ALTER TABLE admin ALTER COLUMN password TYPE VARCHAR(100);`
-> Existing plain-text admin passwords are upgraded to BCrypt the first time that admin logs in.
-
 ## Quick tour
 
 Log in, then call any endpoint with the token:
@@ -214,9 +210,6 @@ The complete, interactive reference (request/response schemas and examples) is i
 | `LOST` | Marked lost |
 
 `GET /api/book-issues/overdue` and `GET /api/book-issues/status/{status}` follow these definitions. Overdue books still count towards the member's borrow limit.
-
-> Earlier versions stored late returns as `OVERDUE`. Those rows are read as `RETURNED` automatically; to tidy the data you can run
-> `UPDATE book_issue SET status = 'RETURNED' WHERE status = 'OVERDUE' AND returned_date IS NOT NULL;`
 
 ## Default business rules
 
