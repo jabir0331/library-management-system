@@ -13,10 +13,10 @@ import java.time.LocalDate;
 public interface BookIssueService {
 
     // Issue a book
-    BookIssueResponseDTO issueBook(BookIssueRequestDTO request);
+    BookIssueResponseDTO issueBook(BookIssueRequestDTO request, String issuedById);
 
     // Return a book
-    BookIssueResponseDTO returnBook(BookReturnRequestDTO request);
+    BookIssueResponseDTO returnBook(BookReturnRequestDTO request, String receivedById);
 
     // Mark book as lost
     BookIssueResponseDTO markBookAsLost(String issueId, String adminId, BigDecimal penaltyAmount);
